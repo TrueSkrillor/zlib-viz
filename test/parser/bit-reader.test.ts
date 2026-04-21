@@ -105,4 +105,19 @@ describe('BitReader', () => {
     expect(() => r.readBits(1)).toThrow(/past EOF/);
     expect(() => r.peek(1)).toThrow(/past EOF/);
   });
+
+  it('peek returns remaining bits zero-padded in high bits when fewer than n bits remain', () => {
+    // totalBits = 8. After readBits(6), only 2 bits remain (bits 6..7 of the byte).
+    // Byte 0xA5 = 0b10100101 → bit 6 = 0, bit 7 = 1. LSB-first, the 2 remaining bits are [0, 1] = 0b10 = 2.
+    // A peek(9) should return those 2 bits in the low position with high bits zero:
+    //   value = 2 (binary 000000010), not a throw, not 0.
+    const r = new BitReader(new Uint8Array([0xA5]));
+    r.readBits(6);
+    expect(r.peek(9)).toBe(0b10);
+    // peek must not advance.
+    expect(r.bitPos).toBe(6);
+    // Once pos reaches totalBits, peek must throw.
+    r.readBits(2);
+    expect(() => r.peek(1)).toThrow(/past EOF/);
+  });
 });
