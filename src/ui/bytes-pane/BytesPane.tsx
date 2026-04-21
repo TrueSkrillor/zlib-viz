@@ -1,6 +1,7 @@
 import { useUiStore } from '../../state/selection';
 import { Tabs } from '../common/Tabs';
 import { HexTab } from './HexTab';
+import { BitStreamTab } from './BitStreamTab';
 
 export function BytesPane() {
   const tab = useUiStore(s => s.bytesPaneTab);
@@ -16,6 +17,7 @@ export function BytesPane() {
       />
       <div className="pane-body" style={{ padding: 0 }}>
         {bytes && tab === 'hex' && <HexTab bytes={bytes} />}
+        {bytes && tab === 'bits' && <BitStreamTab bytes={bytes} />}
       </div>
     </div>
   );

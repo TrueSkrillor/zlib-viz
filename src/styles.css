@@ -65,3 +65,8 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .hex-row .hx .hi { background: rgba(253, 224, 71, 0.15); color: #fde047; border-radius: 2px; }
 .hex-row .hx .hi.sel { background: rgba(253, 224, 71, 0.35); }
 .hex-row .ascii { color: #6c7388; }
+.bits-row { display: grid; grid-template-columns: 64px 1fr; gap: 8px; align-items: center; white-space: pre; }
+.bits-row .off { color: #475569; }
+.bits-row .bts { letter-spacing: 2px; color: #94a3b8; }
+.bits-row .bts .hi { color: #fde047; }
+.bits-row .bts .hi.sel { background: rgba(253, 224, 71, 0.25); }
