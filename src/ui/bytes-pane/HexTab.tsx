@@ -32,8 +32,8 @@ export function HexTab({ bytes }: { bytes: Uint8Array }) {
     const hexParts: React.ReactNode[] = [];
     const asciiChars: string[] = [];
     for (let i = off; i < end; i++) {
-      const inSel = selRange ? i * 8 >= selRange.start && i * 8 < selRange.end : false;
-      const inHover = hiRange ? i * 8 >= hiRange.start && i * 8 < hiRange.end : false;
+      const inSel = selRange ? i * 8 < selRange.end && (i + 1) * 8 > selRange.start : false;
+      const inHover = hiRange ? i * 8 < hiRange.end && (i + 1) * 8 > hiRange.start : false;
       const cls = inSel ? 'hi sel' : inHover ? 'hi' : '';
       hexParts.push(
         <span
