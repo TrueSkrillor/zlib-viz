@@ -2,6 +2,7 @@ import { useCallback, useRef, useState } from 'react';
 import { parseInWorker } from '../../worker/client';
 import { useUiStore } from '../../state/selection';
 import { HexPasteModal } from './HexPasteModal';
+import { ExampleLibrary } from './ExampleLibrary';
 
 export function InputArea() {
   const setParsed = useUiStore(s => s.setParsed);
@@ -27,6 +28,18 @@ export function InputArea() {
     await onBytes(buf);
   }, [onBytes]);
 
+  const onExample = useCallback(async (path: string) => {
+    setStatus({ kind: 'parsing' });
+    try {
+      const res = await fetch(path);
+      if (!res.ok) throw new Error(`failed to fetch ${path}`);
+      const buf = new Uint8Array(await res.arrayBuffer());
+      await onBytes(buf);
+    } catch (e) {
+      setStatus({ kind: 'error', message: e instanceof Error ? e.message : String(e) });
+    }
+  }, [onBytes]);
+
   return (
     <div className="input-area">
       <div
@@ -49,6 +62,7 @@ export function InputArea() {
           ref={fileRef} type="file" style={{ display: 'none' }}
           onChange={(e) => { const f = e.target.files?.[0]; if (f) void onFile(f); }}
         />
+        <ExampleLibrary onChoose={onExample} />
         {status.kind === 'parsing' && <div className="progress">Parsing…</div>}
         {status.kind === 'error' && <div className="error-banner">{status.message}</div>}
         {showModal && (
