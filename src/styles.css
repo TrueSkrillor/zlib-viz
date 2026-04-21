@@ -86,3 +86,10 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .bit-layout .seg.lit { background: #1e40af; }
 .bit-layout .seg.dist { background: #6b21a8; }
 .bit-layout .seg.data { background: #334155; }
+.huffman-sections { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px; height: 100%; min-height: 0; }
+.huffman-sections .card { background: #0e111a; border: 1px solid #1f2633; border-radius: 6px; padding: 10px; display: flex; flex-direction: column; min-height: 0; }
+.huffman-sections h4 { margin: 0 0 8px; font-size: 12px; color: #9aa3b2; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.huffman-row { display: grid; grid-template-columns: 40px 120px 1fr; gap: 6px; font-family: ui-monospace, monospace; font-size: 11px; padding: 1px 4px; color: #c8d0de; }
+.huffman-row .bits { color: #64748b; }
+.huffman-row .code { color: #93c5fd; letter-spacing: 1px; }
+.huffman-row .sym { color: #fde047; }
