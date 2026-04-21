@@ -1,5 +1,6 @@
 import { useUiStore } from '../../state/selection';
 import { Tabs } from '../common/Tabs';
+import { BitLayoutTab } from './BitLayoutTab';
 import { TreeTab } from './TreeTab';
 
 export function StructurePane() {
@@ -21,6 +22,7 @@ export function StructurePane() {
       />
       <div className="pane-body" style={{ padding: 0 }}>
         {tab === 'tree' && <TreeTab />}
+        {tab === 'bit-layout' && <BitLayoutTab />}
       </div>
     </div>
   );
