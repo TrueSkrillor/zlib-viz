@@ -1,10 +1,11 @@
 import { BitReader } from './bit-reader';
 import { buildHuffmanTable, decodeSymbol } from './huffman';
 import {
+  CODE_LEN_ORDER,
   DIST_BASE, DIST_EXTRA, FIXED_DIST_LENGTHS, FIXED_LITLEN_LENGTHS,
   LENGTH_BASE, LENGTH_EXTRA,
 } from './constants';
-import type { Block, HuffmanBody, HuffmanTable, ParseError, StoredBody, Symbol as DeflateSymbol } from './types';
+import type { BitRange, Block, DynamicMeta, HuffmanBody, HuffmanTable, ParseError, RleEntry, StoredBody, Symbol as DeflateSymbol } from './types';
 
 export type DeflateResult = {
   blocks: Block[];
@@ -79,7 +80,15 @@ export function parseDeflate(r: BitReader, streamStartBit = 0): DeflateResult {
           outputRange: { start: outputStart, end: decodedLen },
         });
       } else if (btype === 0b10) {
-        throw new Error('dynamic Huffman not supported yet');
+        const body = parseHuffmanBlock(r, 'dynamic', writeByte, copyFromOutput, () => decodedLen);
+        blocks.push({
+          index: blocks.length,
+          bfinal, btype: 'dynamic',
+          range: { start: blockStart, end: r.bitPos },
+          headerRange,
+          body,
+          outputRange: { start: outputStart, end: decodedLen },
+        });
       } else {
         throw new Error(`reserved btype (0b11) at bit ${blockStart}`);
       }
@@ -129,13 +138,112 @@ function parseHuffmanBlock(
   copyFromOutput: (distance: number, length: number) => { srcStart: number; srcEnd: number },
   outputLen: () => number,
 ): HuffmanBody {
-  if (kind !== 'fixed') {
-    throw new Error('parseHuffmanBlock: only fixed supported in this task');
+  if (kind === 'fixed') {
+    const litlenTable = buildHuffmanTable(FIXED_LITLEN_LENGTHS);
+    const distTable = buildHuffmanTable(FIXED_DIST_LENGTHS);
+    const symbols = decodeSymbols(r, litlenTable, distTable, writeByte, copyFromOutput, outputLen);
+    return { kind: 'huffman', btype: 'fixed', litlenTable, distTable, symbols };
   }
-  const litlenTable = buildHuffmanTable(FIXED_LITLEN_LENGTHS);
-  const distTable = buildHuffmanTable(FIXED_DIST_LENGTHS);
+
+  const hlitStart = r.bitPos;
+  const hlit = r.readBits(5);
+  const hlitRange = { start: hlitStart, end: r.bitPos };
+  const hdistStart = r.bitPos;
+  const hdist = r.readBits(5);
+  const hdistRange = { start: hdistStart, end: r.bitPos };
+  const hclenStart = r.bitPos;
+  const hclen = r.readBits(4);
+  const hclenRange = { start: hclenStart, end: r.bitPos };
+
+  const clCount = hclen + 4;
+  const clLengths = new Array<number>(19).fill(0);
+  const codeLenCodeLengths: { value: number; range: BitRange }[] = [];
+  for (let i = 0; i < clCount; i++) {
+    const s = r.bitPos;
+    const v = r.readBits(3);
+    codeLenCodeLengths.push({ value: v, range: { start: s, end: r.bitPos } });
+    clLengths[CODE_LEN_ORDER[i]] = v;
+  }
+  const codeLenTable = buildHuffmanTable(clLengths);
+
+  const totalLengths = hlit + 257 + hdist + 1;
+  const flatLengths = new Array<number>(totalLengths).fill(0);
+  const litlenLengths: RleEntry[] = [];
+  const distLengths: RleEntry[] = [];
+  let i = 0;
+  let lastLen = 0;
+  while (i < totalLengths) {
+    const codeStart = r.bitPos;
+    const code = decodeSymbol(r, codeLenTable);
+    const codeRange = { start: codeStart, end: r.bitPos };
+    let extraRange: BitRange | undefined;
+    let entry: RleEntry;
+
+    if (code <= 15) {
+      entry = {
+        codeRange, kind: 'literal', value: code,
+        expandedLengths: [code], expandedIndex: i,
+      };
+      flatLengths[i] = code;
+      i++;
+      lastLen = code;
+    } else if (code === 16) {
+      const s = r.bitPos;
+      const extra = r.readBits(2);
+      extraRange = { start: s, end: r.bitPos };
+      const repeat = extra + 3;
+      if (i === 0) throw new Error('RLE code 16 at start of code-length stream');
+      const expanded = new Array<number>(repeat).fill(lastLen);
+      entry = {
+        codeRange, extraRange, kind: 'copy-prev',
+        value: repeat, expandedLengths: expanded, expandedIndex: i,
+      };
+      for (let k = 0; k < repeat; k++) flatLengths[i + k] = lastLen;
+      i += repeat;
+    } else if (code === 17) {
+      const s = r.bitPos;
+      const extra = r.readBits(3);
+      extraRange = { start: s, end: r.bitPos };
+      const repeat = extra + 3;
+      entry = {
+        codeRange, extraRange, kind: 'zeros',
+        value: repeat, expandedLengths: new Array<number>(repeat).fill(0), expandedIndex: i,
+      };
+      i += repeat;
+      lastLen = 0;
+    } else if (code === 18) {
+      const s = r.bitPos;
+      const extra = r.readBits(7);
+      extraRange = { start: s, end: r.bitPos };
+      const repeat = extra + 11;
+      entry = {
+        codeRange, extraRange, kind: 'zeros',
+        value: repeat, expandedLengths: new Array<number>(repeat).fill(0), expandedIndex: i,
+      };
+      i += repeat;
+      lastLen = 0;
+    } else {
+      throw new Error(`invalid code-length code ${code}`);
+    }
+
+    if (entry.expandedIndex < hlit + 257) litlenLengths.push(entry); else distLengths.push(entry);
+  }
+  if (i !== totalLengths) throw new Error('code-length RLE overran the alphabet');
+
+  const litlenLenArray = flatLengths.slice(0, hlit + 257);
+  const distLenArray = flatLengths.slice(hlit + 257);
+  const litlenTable = buildHuffmanTable(litlenLenArray);
+  const distTable = buildHuffmanTable(distLenArray);
+
+  const dynamicMeta: DynamicMeta = {
+    hlit, hdist, hclen,
+    hlitRange, hdistRange, hclenRange,
+    codeLenCodeLengths, codeLenTable,
+    litlenLengths, distLengths,
+  };
+
   const symbols = decodeSymbols(r, litlenTable, distTable, writeByte, copyFromOutput, outputLen);
-  return { kind: 'huffman', btype: 'fixed', litlenTable, distTable, symbols };
+  return { kind: 'huffman', btype: 'dynamic', litlenTable, distTable, dynamicMeta, symbols };
 }
 
 function decodeSymbols(

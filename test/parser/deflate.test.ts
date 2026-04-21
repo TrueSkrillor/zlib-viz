@@ -103,3 +103,30 @@ describe('parseDeflate — fixed Huffman blocks', () => {
     }
   });
 });
+
+describe('parseDeflate — dynamic Huffman blocks', () => {
+  it('round-trips a realistic payload and produces dynamicMeta', () => {
+    const input = Buffer.from(
+      'the quick brown fox jumps over the lazy dog '.repeat(30) +
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(30),
+    );
+    const compressed = deflateRawSync(input, { level: 9 });
+    const result = parseDeflate(new BitReader(new Uint8Array(compressed)));
+    expect(result.errors).toEqual([]);
+    expect(Buffer.from(result.decoded).equals(input)).toBe(true);
+    const dynBlocks = result.blocks.filter(b => b.btype === 'dynamic');
+    expect(dynBlocks.length).toBeGreaterThan(0);
+    for (const b of dynBlocks) {
+      if (b.body.kind !== 'huffman' || !b.body.dynamicMeta) continue;
+      const m = b.body.dynamicMeta;
+      expect(m.hlit).toBeGreaterThanOrEqual(0);
+      expect(m.hdist).toBeGreaterThanOrEqual(0);
+      expect(m.hclen).toBeGreaterThanOrEqual(0);
+      expect(m.codeLenCodeLengths).toHaveLength(m.hclen + 4);
+      const litlenExpanded = m.litlenLengths.flatMap(e => e.expandedLengths);
+      expect(litlenExpanded.length).toBe(m.hlit + 257);
+      const distExpanded = m.distLengths.flatMap(e => e.expandedLengths);
+      expect(distExpanded.length).toBe(m.hdist + 1);
+    }
+  });
+});
