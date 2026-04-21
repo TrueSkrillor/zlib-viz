@@ -1,12 +1,14 @@
 import { useCallback, useRef, useState } from 'react';
 import { parseInWorker } from '../../worker/client';
 import { useUiStore } from '../../state/selection';
+import { HexPasteModal } from './HexPasteModal';
 
 export function InputArea() {
   const setParsed = useUiStore(s => s.setParsed);
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragOver, setDragOver] = useState(false);
   const [status, setStatus] = useState<{ kind: 'idle' | 'parsing' | 'error'; message?: string }>({ kind: 'idle' });
+  const [showModal, setShowModal] = useState(false);
 
   const onBytes = useCallback(async (bytes: Uint8Array) => {
     setStatus({ kind: 'parsing' });
@@ -41,6 +43,7 @@ export function InputArea() {
         <p>Drop a zlib / gzip / raw-DEFLATE file here, or pick one.</p>
         <div className="actions">
           <button onClick={() => fileRef.current?.click()}>Choose file</button>
+          <button className="secondary" onClick={() => setShowModal(true)}>Paste bytes</button>
         </div>
         <input
           ref={fileRef} type="file" style={{ display: 'none' }}
@@ -48,6 +51,12 @@ export function InputArea() {
         />
         {status.kind === 'parsing' && <div className="progress">Parsing…</div>}
         {status.kind === 'error' && <div className="error-banner">{status.message}</div>}
+        {showModal && (
+          <HexPasteModal
+            onClose={() => setShowModal(false)}
+            onBytes={(b) => { setShowModal(false); void onBytes(b); }}
+          />
+        )}
       </div>
     </div>
   );
