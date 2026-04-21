@@ -50,3 +50,12 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .tabs button.active { background: #3b82f6; color: white; }
 .tabs button:disabled { opacity: 0.4; cursor: not-allowed; }
 .pane-body { flex: 1; min-height: 0; overflow: auto; padding: 8px; font-family: ui-monospace, monospace; font-size: 12px; }
+.timeline { display: flex; gap: 2px; padding: 6px 10px; background: #12151c; border-bottom: 1px solid #1f2633; }
+.timeline .seg { height: 22px; border-radius: 3px; display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: white; cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; padding: 0 4px; }
+.timeline .seg.stored { background: #64748b; }
+.timeline .seg.fixed { background: #2563eb; }
+.timeline .seg.dynamic { background: #a855f7; }
+.timeline .seg.wrap,
+.timeline .seg.trailer { background: #14532d; }
+.timeline .seg.active { outline: 2px solid #fde047; outline-offset: -2px; }
