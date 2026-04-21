@@ -20,3 +20,33 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .input-card button.secondary { background: #272d39; }
 .error-banner { background: #7f1d1d; color: #fee2e2; padding: 8px 16px; }
 .progress { padding: 8px 16px; color: #9aa3b2; }
+.viewer { display: flex; flex-direction: column; height: 100%; }
+.topbar {
+  display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+  background: #12151c; border-bottom: 1px solid #1f2633;
+}
+.topbar .pill { background: #272d39; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
+.topbar .pill.detect { background: #065f46; color: #a7f3d0; }
+.topbar .spacer { flex: 1; }
+.depth-selector button {
+  background: #272d39; color: #e0e7ff; border: 0; padding: 4px 10px; border-radius: 4px;
+  margin-left: 2px; cursor: pointer;
+}
+.depth-selector button.active { background: #3b82f6; }
+.three-pane { display: grid; grid-template-columns: 30% 1fr 30%; gap: 6px; padding: 6px; flex: 1; min-height: 0; }
+.pane {
+  display: flex; flex-direction: column; background: #12151c; border-radius: 6px;
+  min-height: 0; overflow: hidden;
+}
+.pane-header {
+  padding: 6px 10px; font-size: 11px; color: #6c7388;
+  text-transform: uppercase; letter-spacing: 0.06em;
+}
+.tabs { display: flex; padding: 0 8px; }
+.tabs button {
+  background: #1a1f2b; color: #8b95a8; border: 0; padding: 4px 10px; border-radius: 3px 3px 0 0;
+  margin-right: 2px; cursor: pointer; font-size: 12px;
+}
+.tabs button.active { background: #3b82f6; color: white; }
+.tabs button:disabled { opacity: 0.4; cursor: not-allowed; }
+.pane-body { flex: 1; min-height: 0; overflow: auto; padding: 8px; font-family: ui-monospace, monospace; font-size: 12px; }
