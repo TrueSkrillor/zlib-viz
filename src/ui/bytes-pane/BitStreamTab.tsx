@@ -2,6 +2,7 @@ import { FixedSizeList } from 'react-window';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { useUiStore } from '../../state/selection';
 import { resolveSelection } from '../../state/resolve-selection';
+import { findSelectionAtBit } from '../../state/find-at-bit';
 
 const BITS_PER_ROW = 64;
 const ROW_HEIGHT = 18;
@@ -10,6 +11,7 @@ export function BitStreamTab({ bytes }: { bytes: Uint8Array }) {
   const selection = useUiStore(s => s.selection);
   const hover = useUiStore(s => s.hover);
   const parsed = useUiStore(s => s.parsed);
+  const setSelection = useUiStore(s => s.setSelection);
   const selRange = useMemo(() => resolveSelection(selection, parsed).bitRange, [selection, parsed]);
   const hiRange = hover ?? selRange;
 
@@ -32,7 +34,15 @@ export function BitStreamTab({ bytes }: { bytes: Uint8Array }) {
       const inSel = selRange ? i >= selRange.start && i < selRange.end : false;
       const inHover = hiRange ? i >= hiRange.start && i < hiRange.end : false;
       const cls = inSel ? 'hi sel' : inHover ? 'hi' : '';
-      parts.push(<span key={i} className={cls}>{bit}</span>);
+      parts.push(
+        <span
+          key={i}
+          className={cls}
+          onClick={() => parsed && setSelection(findSelectionAtBit(parsed, i))}
+        >
+          {bit}
+        </span>,
+      );
       if (i - start > 0 && ((i - start + 1) % 8 === 0)) parts.push(' ');
     }
     return (
@@ -41,7 +51,7 @@ export function BitStreamTab({ bytes }: { bytes: Uint8Array }) {
         <span className="bts">{parts}</span>
       </div>
     );
-  }, [bytes, totalBits, selRange, hiRange]);
+  }, [bytes, totalBits, selRange, hiRange, setSelection, parsed]);
 
   return (
     <FixedSizeList ref={listRef} height={400} width="100%" itemSize={ROW_HEIGHT} itemCount={rowCount}>
