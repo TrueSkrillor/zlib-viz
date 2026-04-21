@@ -70,3 +70,10 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .bits-row .bts { letter-spacing: 2px; color: #94a3b8; }
 .bits-row .bts .hi { color: #fde047; }
 .bits-row .bts .hi.sel { background: rgba(253, 224, 71, 0.25); }
+.tree-row { display: flex; align-items: center; gap: 6px; padding: 0 8px; cursor: pointer; white-space: nowrap; }
+.tree-row:hover { background: #1a1f2b; }
+.tree-row.active { background: #1e40af; color: white; }
+.tree-row .caret { width: 10px; color: #64748b; text-align: center; }
+.tree-row .name { color: #c8d0de; }
+.tree-row .detail { color: #6c7388; font-size: 11px; }
+.tree-row .range { color: #475569; font-size: 10px; margin-left: auto; padding-left: 12px; }

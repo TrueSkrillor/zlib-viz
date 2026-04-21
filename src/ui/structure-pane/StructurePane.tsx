@@ -1,5 +1,6 @@
 import { useUiStore } from '../../state/selection';
 import { Tabs } from '../common/Tabs';
+import { TreeTab } from './TreeTab';
 
 export function StructurePane() {
   const tab = useUiStore(s => s.structurePaneTab);
@@ -18,7 +19,9 @@ export function StructurePane() {
         value={tab}
         onChange={setTab}
       />
-      <div className="pane-body">(structure pane — filled in next tasks)</div>
+      <div className="pane-body" style={{ padding: 0 }}>
+        {tab === 'tree' && <TreeTab />}
+      </div>
     </div>
   );
 }
