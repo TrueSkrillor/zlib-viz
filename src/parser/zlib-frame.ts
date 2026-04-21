@@ -40,6 +40,8 @@ export function parseZlib(r: BitReader): {
     };
   }
 
+  wrapper.range = { start: wrapperStart, end: r.bitPos };
+
   const deflateResult = parseDeflate(r);
   errors.push(...deflateResult.errors);
   const blocks = deflateResult.blocks;
@@ -66,8 +68,6 @@ export function parseZlib(r: BitReader): {
       bitPos: r.bitPos,
     });
   }
-
-  wrapper.range = { start: wrapperStart, end: trailer ? trailer.range.end : r.bitPos };
 
   return { wrapper, blocks, decoded, trailer, errors };
 }

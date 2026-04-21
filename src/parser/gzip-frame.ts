@@ -70,6 +70,8 @@ export function parseGzip(r: BitReader): {
     wrapper.headerCrc = { range: { start: xs, end: r.bitPos }, value: lo | (hi << 8) };
   }
 
+  wrapper.range = { start, end: r.bitPos };
+
   const deflateResult = parseDeflate(r);
   errors.push(...deflateResult.errors);
   const blocks = deflateResult.blocks;
@@ -105,8 +107,6 @@ export function parseGzip(r: BitReader): {
       bitPos: r.bitPos,
     });
   }
-
-  wrapper.range = { start, end: trailer ? trailer.range.end : r.bitPos };
 
   return { wrapper, blocks, decoded, trailer, errors };
 }
