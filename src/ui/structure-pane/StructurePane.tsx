@@ -1,6 +1,7 @@
 import { useUiStore } from '../../state/selection';
 import { Tabs } from '../common/Tabs';
 import { BitLayoutTab } from './BitLayoutTab';
+import { CodeLenAlphabetTab } from './CodeLenAlphabetTab';
 import { HuffmanTreesTab } from './HuffmanTreesTab';
 import { TreeTab } from './TreeTab';
 
@@ -25,6 +26,7 @@ export function StructurePane() {
         {tab === 'tree' && <TreeTab />}
         {tab === 'bit-layout' && <BitLayoutTab />}
         {tab === 'huffman' && <HuffmanTreesTab />}
+        {tab === 'code-len' && <CodeLenAlphabetTab />}
       </div>
     </div>
   );

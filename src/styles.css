@@ -93,3 +93,10 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .huffman-row .bits { color: #64748b; }
 .huffman-row .code { color: #93c5fd; letter-spacing: 1px; }
 .huffman-row .sym { color: #fde047; }
+.code-len-grid { padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; height: 100%; min-height: 0; }
+.code-len-grid h4 { margin: 0 0 6px; font-size: 12px; color: #9aa3b2; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+.code-len-row { display: grid; grid-template-columns: 50px 60px 80px 1fr; gap: 6px; font-family: ui-monospace, monospace; font-size: 11px; color: #c8d0de; padding: 1px 4px; }
+.code-len-row .i { color: #64748b; }
+.code-len-row .sym { color: #fde047; }
+.code-len-row .rng { color: #475569; }
+.rle-row { display: grid; grid-template-columns: 60px 80px 90px 1fr; gap: 6px; font-family: ui-monospace, monospace; font-size: 11px; padding: 1px 4px; color: #c8d0de; }
