@@ -1,6 +1,7 @@
 import { FixedSizeList } from 'react-window';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { useUiStore } from '../../state/selection';
+import { useMeasure } from '../common/use-measure';
 
 const ROW_HEIGHT = 18;
 
@@ -10,6 +11,7 @@ export function TokensTab() {
   const setSelection = useUiStore(s => s.setSelection);
   const listRef = useRef<FixedSizeList>(null);
 
+  const [hostRef, { width, height }] = useMeasure<HTMLDivElement>();
   const blockIndex = selection.kind === 'block' || selection.kind === 'blockField' || selection.kind === 'symbol'
     ? selection.blockIndex : 0;
   const block = parsed?.blocks[blockIndex ?? 0];
@@ -47,11 +49,15 @@ export function TokensTab() {
   if (block.body.kind !== 'huffman') return <div style={{ padding: 12, color: '#6c7388' }}>Stored blocks have no tokens.</div>;
 
   return (
-    <FixedSizeList ref={listRef} height={400} width="100%" itemSize={ROW_HEIGHT} itemCount={symbols.length}>
-      {Row}
-    </FixedSizeList>
+    <div ref={hostRef} style={{ width: '100%', height: '100%' }}>
+      {width > 0 && height > 0 && (
+        <FixedSizeList ref={listRef} height={height} width={width} itemSize={ROW_HEIGHT} itemCount={symbols.length}>
+          {Row}
+        </FixedSizeList>
+      )}
+    </div>
   );
 }
 
-function bitRangeText(r: { start: number; end: number }) { return `bits ${r.start}–${r.end}`; }
+function bitRangeText(r: { start: number; end: number }) { return `${r.start}–${r.end}`; }
 function printable(c: number) { return c >= 0x20 && c < 0x7f ? ` '${String.fromCharCode(c)}'` : ''; }

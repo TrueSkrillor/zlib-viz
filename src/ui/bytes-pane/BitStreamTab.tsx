@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { useUiStore } from '../../state/selection';
 import { resolveSelection } from '../../state/resolve-selection';
 import { findSelectionAtBit } from '../../state/find-at-bit';
+import { useMeasure } from '../common/use-measure';
 
 const BITS_PER_ROW = 64;
 const ROW_HEIGHT = 18;
@@ -15,6 +16,7 @@ export function BitStreamTab({ bytes }: { bytes: Uint8Array }) {
   const selRange = useMemo(() => resolveSelection(selection, parsed).bitRange, [selection, parsed]);
   const hiRange = hover ?? selRange;
 
+  const [hostRef, { width, height }] = useMeasure<HTMLDivElement>();
   const listRef = useRef<FixedSizeList>(null);
   useEffect(() => {
     if (!selRange) return;
@@ -54,8 +56,12 @@ export function BitStreamTab({ bytes }: { bytes: Uint8Array }) {
   }, [bytes, totalBits, selRange, hiRange, setSelection, parsed]);
 
   return (
-    <FixedSizeList ref={listRef} height={400} width="100%" itemSize={ROW_HEIGHT} itemCount={rowCount}>
-      {Row}
-    </FixedSizeList>
+    <div ref={hostRef} style={{ width: '100%', height: '100%' }}>
+      {width > 0 && height > 0 && (
+        <FixedSizeList ref={listRef} height={height} width={width} itemSize={ROW_HEIGHT} itemCount={rowCount}>
+          {Row}
+        </FixedSizeList>
+      )}
+    </div>
   );
 }

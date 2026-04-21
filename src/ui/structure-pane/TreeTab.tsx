@@ -3,6 +3,7 @@ import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { useUiStore } from '../../state/selection';
 import { buildTreeRows, type TreeRow } from './build-tree';
 import { resolveSelection } from '../../state/resolve-selection';
+import { useMeasure } from '../common/use-measure';
 
 const ROW_HEIGHT = 20;
 
@@ -18,6 +19,7 @@ export function TreeTab() {
     return rows.findIndex(r => selectionEquals(r.selection, selection));
   }, [rows, selection]);
 
+  const [hostRef, { width, height }] = useMeasure<HTMLDivElement>();
   const listRef = useRef<FixedSizeList>(null);
   useEffect(() => {
     if (selectedIdx >= 0) listRef.current?.scrollToItem(selectedIdx, 'smart');
@@ -47,9 +49,13 @@ export function TreeTab() {
 
   if (!parsed) return null;
   return (
-    <FixedSizeList ref={listRef} height={400} width="100%" itemSize={ROW_HEIGHT} itemCount={rows.length}>
-      {Row}
-    </FixedSizeList>
+    <div ref={hostRef} style={{ width: '100%', height: '100%' }}>
+      {width > 0 && height > 0 && (
+        <FixedSizeList ref={listRef} height={height} width={width} itemSize={ROW_HEIGHT} itemCount={rows.length}>
+          {Row}
+        </FixedSizeList>
+      )}
+    </div>
   );
 }
 

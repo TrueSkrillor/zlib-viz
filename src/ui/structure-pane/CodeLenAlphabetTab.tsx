@@ -1,6 +1,8 @@
 import { FixedSizeList } from 'react-window';
+import type { ReactNode } from 'react';
 import { useUiStore } from '../../state/selection';
 import { CODE_LEN_ORDER } from '../../parser/constants';
+import { useMeasure } from '../common/use-measure';
 
 const ROW_HEIGHT = 16;
 
@@ -30,7 +32,7 @@ export function CodeLenAlphabetTab() {
         <span className="i">#{index}</span>
         <span className="sym">{alphabetSymbol}</span>
         <span>len={entry.value}</span>
-        <span className="rng">bits {entry.range.start}–{entry.range.end}</span>
+        <span className="rng">{entry.range.start}–{entry.range.end}</span>
       </div>
     );
   };
@@ -59,17 +61,31 @@ export function CodeLenAlphabetTab() {
 
   return (
     <div className="code-len-grid">
-      <div>
-        <h4>Code-length lengths ({m.codeLenCodeLengths.length}×3 bits)</h4>
-        <FixedSizeList height={300} width="100%" itemSize={ROW_HEIGHT} itemCount={m.codeLenCodeLengths.length}>
-          {Code}
-        </FixedSizeList>
-      </div>
-      <div>
-        <h4>RLE expansion ({allRle.length} entries)</h4>
-        <FixedSizeList height={300} width="100%" itemSize={ROW_HEIGHT} itemCount={allRle.length}>
-          {Rle}
-        </FixedSizeList>
+      <Section title={`Code-length lengths (${m.codeLenCodeLengths.length}×3 bits)`}>
+        {(w, h) => (
+          <FixedSizeList height={h} width={w} itemSize={ROW_HEIGHT} itemCount={m.codeLenCodeLengths.length}>
+            {Code}
+          </FixedSizeList>
+        )}
+      </Section>
+      <Section title={`RLE expansion (${allRle.length} entries)`}>
+        {(w, h) => (
+          <FixedSizeList height={h} width={w} itemSize={ROW_HEIGHT} itemCount={allRle.length}>
+            {Rle}
+          </FixedSizeList>
+        )}
+      </Section>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: (w: number, h: number) => ReactNode }) {
+  const [ref, { width, height }] = useMeasure<HTMLDivElement>();
+  return (
+    <div className="code-len-section">
+      <h4>{title}</h4>
+      <div ref={ref} style={{ flex: 1, minHeight: 0 }}>
+        {width > 0 && height > 0 && children(width, height)}
       </div>
     </div>
   );

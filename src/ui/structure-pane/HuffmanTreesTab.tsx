@@ -1,6 +1,7 @@
 import { FixedSizeList } from 'react-window';
 import { useUiStore } from '../../state/selection';
 import type { HuffmanTable } from '../../parser/types';
+import { useMeasure } from '../common/use-measure';
 
 const ROW_HEIGHT = 16;
 
@@ -34,6 +35,7 @@ export function HuffmanTreesTab() {
 
 function HuffmanList({ table }: { table: HuffmanTable }) {
   const rows = table.symbolsByCode;
+  const [hostRef, { width, height }] = useMeasure<HTMLDivElement>();
   const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
     const r = rows[index];
     const codeStr = r.code.toString(2).padStart(r.bits, '0');
@@ -47,9 +49,13 @@ function HuffmanList({ table }: { table: HuffmanTable }) {
     );
   };
   return (
-    <FixedSizeList height={280} width="100%" itemSize={ROW_HEIGHT} itemCount={rows.length}>
-      {Row}
-    </FixedSizeList>
+    <div ref={hostRef} style={{ width: '100%', height: '100%' }}>
+      {width > 0 && height > 0 && (
+        <FixedSizeList height={height} width={width} itemSize={ROW_HEIGHT} itemCount={rows.length}>
+          {Row}
+        </FixedSizeList>
+      )}
+    </div>
   );
 }
 

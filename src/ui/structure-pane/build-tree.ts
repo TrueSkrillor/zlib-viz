@@ -71,7 +71,7 @@ export function buildTreeRows(parsed: ParsedStream, depth: Depth): TreeRow[] {
 }
 
 function rangeText(r: { start: number; end: number }): string {
-  return `bits ${r.start.toLocaleString()}–${r.end.toLocaleString()}`;
+  return `${r.start}–${r.end}`;
 }
 function printable(c: number): string {
   return c >= 0x20 && c < 0x7f ? `'${String.fromCharCode(c)}'` : '';

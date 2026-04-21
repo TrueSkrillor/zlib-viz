@@ -1,11 +1,16 @@
-import { FixedSizeList, type ListOnItemsRenderedProps } from 'react-window';
+import { FixedSizeList } from 'react-window';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { useUiStore } from '../../state/selection';
 import { resolveSelection } from '../../state/resolve-selection';
 import { findSelectionAtBit } from '../../state/find-at-bit';
+import { useMeasure } from '../common/use-measure';
 
-const ROW_BYTES = 16;
 const ROW_HEIGHT = 18;
+const WIDE_THRESHOLD = 540; // px — below this we show 8 bytes/row instead of 16
+
+function rowBytesFor(width: number): number {
+  return width >= WIDE_THRESHOLD ? 16 : 8;
+}
 
 export function HexTab({ bytes }: { bytes: Uint8Array }) {
   const selection = useUiStore(s => s.selection);
@@ -15,20 +20,22 @@ export function HexTab({ bytes }: { bytes: Uint8Array }) {
   const selRange = useMemo(() => resolveSelection(selection, parsed).bitRange, [selection, parsed]);
   const hiRange = hover ?? selRange;
 
+  const [hostRef, { width, height }] = useMeasure<HTMLDivElement>();
+  const rowBytes = rowBytesFor(width);
   const listRef = useRef<FixedSizeList>(null);
 
   useEffect(() => {
     if (!selRange) return;
     const byteStart = selRange.start >> 3;
-    const row = Math.floor(byteStart / ROW_BYTES);
+    const row = Math.floor(byteStart / rowBytes);
     listRef.current?.scrollToItem(row, 'smart');
-  }, [selRange]);
+  }, [selRange, rowBytes]);
 
-  const rowCount = Math.max(1, Math.ceil(bytes.length / ROW_BYTES));
+  const rowCount = Math.max(1, Math.ceil(bytes.length / rowBytes));
 
   const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const off = index * ROW_BYTES;
-    const end = Math.min(off + ROW_BYTES, bytes.length);
+    const off = index * rowBytes;
+    const end = Math.min(off + rowBytes, bytes.length);
     const hexParts: React.ReactNode[] = [];
     const asciiChars: string[] = [];
     for (let i = off; i < end; i++) {
@@ -49,25 +56,26 @@ export function HexTab({ bytes }: { bytes: Uint8Array }) {
     }
     return (
       <div className="hex-row" style={style}>
-        <span className="off">0x{off.toString(16).padStart(6, '0')}</span>
+        <span className="off">{off.toString(16).padStart(6, '0')}</span>
         <span className="hx">{hexParts}</span>
         <span className="ascii">{asciiChars.join('')}</span>
       </div>
     );
-  }, [bytes, selRange, hiRange, setSelection, parsed]);
-
-  const onItemsRendered = useCallback((_: ListOnItemsRenderedProps) => {}, []);
+  }, [bytes, selRange, hiRange, setSelection, parsed, rowBytes]);
 
   return (
-    <FixedSizeList
-      ref={listRef}
-      height={400}
-      width="100%"
-      itemSize={ROW_HEIGHT}
-      itemCount={rowCount}
-      onItemsRendered={onItemsRendered}
-    >
-      {Row}
-    </FixedSizeList>
+    <div ref={hostRef} style={{ width: '100%', height: '100%' }}>
+      {width > 0 && height > 0 && (
+        <FixedSizeList
+          ref={listRef}
+          height={height}
+          width={width}
+          itemSize={ROW_HEIGHT}
+          itemCount={rowCount}
+        >
+          {Row}
+        </FixedSizeList>
+      )}
+    </div>
   );
 }

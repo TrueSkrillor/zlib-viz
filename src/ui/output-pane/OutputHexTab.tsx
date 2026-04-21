@@ -2,28 +2,34 @@ import { FixedSizeList } from 'react-window';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { useUiStore } from '../../state/selection';
 import { resolveSelection } from '../../state/resolve-selection';
+import { useMeasure } from '../common/use-measure';
 
-const ROW_BYTES = 16;
 const ROW_HEIGHT = 18;
+const WIDE_THRESHOLD = 540;
+
+function rowBytesFor(width: number): number {
+  return width >= WIDE_THRESHOLD ? 16 : 8;
+}
 
 export function OutputHexTab() {
   const parsed = useUiStore(s => s.parsed);
   const selection = useUiStore(s => s.selection);
   const resolved = useMemo(() => resolveSelection(selection, parsed), [selection, parsed]);
+  const [hostRef, { width, height }] = useMeasure<HTMLDivElement>();
+  const rowBytes = rowBytesFor(width);
   const listRef = useRef<FixedSizeList>(null);
 
   useEffect(() => {
     if (!resolved.outputRange) return;
-    listRef.current?.scrollToItem(Math.floor(resolved.outputRange.start / ROW_BYTES), 'smart');
-  }, [resolved.outputRange]);
+    listRef.current?.scrollToItem(Math.floor(resolved.outputRange.start / rowBytes), 'smart');
+  }, [resolved.outputRange, rowBytes]);
 
-  if (!parsed) return null;
-  const decoded = parsed.decoded;
-  const rowCount = Math.max(1, Math.ceil(decoded.length / ROW_BYTES));
+  const decoded = parsed?.decoded ?? new Uint8Array(0);
+  const rowCount = Math.max(1, Math.ceil(decoded.length / rowBytes));
 
   const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const off = index * ROW_BYTES;
-    const end = Math.min(off + ROW_BYTES, decoded.length);
+    const off = index * rowBytes;
+    const end = Math.min(off + rowBytes, decoded.length);
     const parts: React.ReactNode[] = [];
     const asciiChars: string[] = [];
     for (let i = off; i < end; i++) {
@@ -36,16 +42,21 @@ export function OutputHexTab() {
     }
     return (
       <div className="output-hex-row" style={style}>
-        <span className="off">0x{off.toString(16).padStart(6, '0')}</span>
+        <span className="off">{off.toString(16).padStart(6, '0')}</span>
         <span className="hx">{parts}</span>
         <span className="ascii">{asciiChars.join('')}</span>
       </div>
     );
-  }, [decoded, resolved]);
+  }, [decoded, resolved, rowBytes]);
 
+  if (!parsed) return null;
   return (
-    <FixedSizeList ref={listRef} height={400} width="100%" itemSize={ROW_HEIGHT} itemCount={rowCount}>
-      {Row}
-    </FixedSizeList>
+    <div ref={hostRef} style={{ width: '100%', height: '100%' }}>
+      {width > 0 && height > 0 && (
+        <FixedSizeList ref={listRef} height={height} width={width} itemSize={ROW_HEIGHT} itemCount={rowCount}>
+          {Row}
+        </FixedSizeList>
+      )}
+    </div>
   );
 }

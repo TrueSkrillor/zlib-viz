@@ -1,4 +1,5 @@
 import { useUiStore } from '../../state/selection';
+import { useMeasure } from '../common/use-measure';
 
 type Seg = { label: string; bits: number; className: string };
 
@@ -6,6 +7,7 @@ export function BitLayoutTab() {
   const parsed = useUiStore(s => s.parsed);
   const selection = useUiStore(s => s.selection);
   const setHover = useUiStore(s => s.setHover);
+  const [hostRef, { width }] = useMeasure<HTMLDivElement>();
   const blockIndex = selection.kind === 'block' || selection.kind === 'blockField' || selection.kind === 'symbol'
     ? selection.blockIndex : 0;
   if (!parsed) return null;
@@ -26,30 +28,42 @@ export function BitLayoutTab() {
     segs.push({ label: `dist lengths (RLE)`, bits: distBits, className: 'dist' });
   }
   const headerBits = segs.reduce((n, s) => n + s.bits, 0);
-  segs.push({ label: 'compressed symbols', bits: (block.range.end - block.range.start) - headerBits, className: 'data' });
+  const dataBits = (block.range.end - block.range.start) - headerBits;
+  if (dataBits > 0) segs.push({ label: 'compressed symbols', bits: dataBits, className: 'data' });
 
-  const minPx = 8;
+  const totalBits = segs.reduce((n, s) => n + s.bits, 0) || 1;
+  const available = Math.max(400, width - 24); // minus padding
+  const minPx = 42; // enough to show a short label
+  // Proportional layout: if every seg gets its proportional share, but no less than minPx.
+  // Allocate minPx to each seg first, then distribute remaining space by proportional bits.
+  const baseTotal = minPx * segs.length;
+  const extra = Math.max(0, available - baseTotal);
+  const widths = segs.map(s => minPx + extra * (s.bits / totalBits));
+
   return (
-    <div className="bit-layout">
+    <div ref={hostRef} className="bit-layout">
       <div className="bit-layout-row">
         {segs.map((s, i) => (
           <div
             key={i}
             className={`seg ${s.className}`}
-            style={{ width: Math.max(minPx, s.bits) }}
-            title={`${s.label} · ${s.bits} bit(s)`}
-            onMouseEnter={() => setHover(rangeFor(block, s, i, segs))}
+            style={{ width: widths[i] }}
+            title={`${s.label} · ${s.bits} bit${s.bits === 1 ? '' : 's'}`}
+            onMouseEnter={() => setHover(rangeFor(block, i, segs))}
             onMouseLeave={() => setHover(null)}
           >
             {s.label}
           </div>
         ))}
       </div>
+      <div className="bit-layout-legend">
+        total: {totalBits.toLocaleString()} bits · {segs.length} regions
+      </div>
     </div>
   );
 }
 
-function rangeFor(block: { range: { start: number } }, _seg: Seg, idx: number, segs: Seg[]) {
+function rangeFor(block: { range: { start: number } }, idx: number, segs: Seg[]) {
   let start = block.range.start;
   for (let i = 0; i < idx; i++) start += segs[i].bits;
   return { start, end: start + segs[idx].bits };

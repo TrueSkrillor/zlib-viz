@@ -4,4 +4,6 @@ dist/
 src/**/*.js
 *.tsbuildinfo
 .worktrees/
+.layout-check/
+test-results/
 .DS_Store
