@@ -1,6 +1,6 @@
 import { BitReader } from './bit-reader';
 import { parseDeflate } from './deflate';
-import type { Adler32Trailer, Block, ParseError, ParsedStream, ZlibWrapper } from './types';
+import type { Adler32Trailer, Block, ParseError, ZlibWrapper } from './types';
 
 export function parseZlib(r: BitReader): {
   wrapper: ZlibWrapper;
@@ -81,5 +81,3 @@ function adler32(data: Uint8Array): number {
   }
   return ((b << 16) | a) >>> 0;
 }
-
-export type _ParsedStream = ParsedStream;
