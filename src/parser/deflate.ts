@@ -193,6 +193,7 @@ function parseHuffmanBlock(
       extraRange = { start: s, end: r.bitPos };
       const repeat = extra + 3;
       if (i === 0) throw new Error('RLE code 16 at start of code-length stream');
+      if (i + repeat > totalLengths) throw new Error(`RLE code ${code} overruns alphabet at index ${i}`);
       const expanded = new Array<number>(repeat).fill(lastLen);
       entry = {
         codeRange, extraRange, kind: 'copy-prev',
@@ -205,6 +206,7 @@ function parseHuffmanBlock(
       const extra = r.readBits(3);
       extraRange = { start: s, end: r.bitPos };
       const repeat = extra + 3;
+      if (i + repeat > totalLengths) throw new Error(`RLE code ${code} overruns alphabet at index ${i}`);
       entry = {
         codeRange, extraRange, kind: 'zeros',
         value: repeat, expandedLengths: new Array<number>(repeat).fill(0), expandedIndex: i,
@@ -216,6 +218,7 @@ function parseHuffmanBlock(
       const extra = r.readBits(7);
       extraRange = { start: s, end: r.bitPos };
       const repeat = extra + 11;
+      if (i + repeat > totalLengths) throw new Error(`RLE code ${code} overruns alphabet at index ${i}`);
       entry = {
         codeRange, extraRange, kind: 'zeros',
         value: repeat, expandedLengths: new Array<number>(repeat).fill(0), expandedIndex: i,
@@ -226,6 +229,8 @@ function parseHuffmanBlock(
       throw new Error(`invalid code-length code ${code}`);
     }
 
+    // ASSUMPTION: no RLE entry straddles the litlen/dist boundary. True for zlib's output;
+    // a fully spec-compliant encoder could violate this and split expandedLengths across the boundary.
     if (entry.expandedIndex < hlit + 257) litlenLengths.push(entry); else distLengths.push(entry);
   }
   if (i !== totalLengths) throw new Error('code-length RLE overran the alphabet');
