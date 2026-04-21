@@ -76,4 +76,33 @@ describe('BitReader', () => {
     r.readBits(3);
     expect(() => r.readBytes(1)).toThrow(/aligned/);
   });
+
+  it('advance throws past EOF', () => {
+    const r = new BitReader(new Uint8Array([0xFF]));
+    expect(() => r.advance(9)).toThrow(/past EOF/);
+  });
+
+  it('advance rejects negative n', () => {
+    const r = new BitReader(new Uint8Array([0xFF, 0xFF]));
+    r.readBits(4);
+    expect(() => r.advance(-1)).toThrow(/>= 0/);
+  });
+
+  it('readBytes rejects negative n', () => {
+    const r = new BitReader(new Uint8Array([0x11, 0x22]));
+    expect(() => r.readBytes(-1)).toThrow(/>= 0/);
+  });
+
+  it('peek rejects n outside 1..16', () => {
+    const r = new BitReader(new Uint8Array([0xFF, 0xFF]));
+    expect(() => r.peek(0)).toThrow();
+    expect(() => r.peek(17)).toThrow();
+  });
+
+  it('empty input reports eof and throws on any read', () => {
+    const r = new BitReader(new Uint8Array([]));
+    expect(r.eof()).toBe(true);
+    expect(() => r.readBits(1)).toThrow(/past EOF/);
+    expect(() => r.peek(1)).toThrow(/past EOF/);
+  });
 });

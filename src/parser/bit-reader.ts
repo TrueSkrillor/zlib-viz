@@ -31,6 +31,7 @@ export class BitReader {
   }
 
   advance(n: number): void {
+    if (n < 0) throw new RangeError(`advance: n must be >= 0, got ${n}`);
     if (this.pos + n > this.totalBits) throw new RangeError('advance: past EOF');
     this.pos += n;
   }
@@ -41,6 +42,7 @@ export class BitReader {
   }
 
   readBytes(n: number): Uint8Array {
+    if (n < 0) throw new RangeError(`readBytes: n must be >= 0, got ${n}`);
     if ((this.pos & 7) !== 0) throw new Error('readBytes: reader is not byte-aligned');
     const byteStart = this.pos >> 3;
     if (byteStart + n > this.bytes.length) throw new RangeError('readBytes: past EOF');
