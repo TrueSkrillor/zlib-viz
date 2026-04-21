@@ -1,0 +1,53 @@
+import { useCallback, useRef, useState } from 'react';
+import { parseInWorker } from '../../worker/client';
+import { useUiStore } from '../../state/selection';
+
+export function InputArea() {
+  const setParsed = useUiStore(s => s.setParsed);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [status, setStatus] = useState<{ kind: 'idle' | 'parsing' | 'error'; message?: string }>({ kind: 'idle' });
+
+  const onBytes = useCallback(async (bytes: Uint8Array) => {
+    setStatus({ kind: 'parsing' });
+    try {
+      const parsed = await parseInWorker(bytes);
+      setParsed(parsed);
+      setStatus({ kind: 'idle' });
+    } catch (e) {
+      setStatus({ kind: 'error', message: e instanceof Error ? e.message : String(e) });
+    }
+  }, [setParsed]);
+
+  const onFile = useCallback(async (file: File) => {
+    const buf = new Uint8Array(await file.arrayBuffer());
+    await onBytes(buf);
+  }, [onBytes]);
+
+  return (
+    <div className="input-area">
+      <div
+        className={`input-card ${dragOver ? 'drag-over' : ''}`}
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={(e) => {
+          e.preventDefault(); setDragOver(false);
+          const file = e.dataTransfer.files[0];
+          if (file) void onFile(file);
+        }}
+      >
+        <h1>zlib-viz</h1>
+        <p>Drop a zlib / gzip / raw-DEFLATE file here, or pick one.</p>
+        <div className="actions">
+          <button onClick={() => fileRef.current?.click()}>Choose file</button>
+        </div>
+        <input
+          ref={fileRef} type="file" style={{ display: 'none' }}
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) void onFile(f); }}
+        />
+        {status.kind === 'parsing' && <div className="progress">Parsing…</div>}
+        {status.kind === 'error' && <div className="error-banner">{status.message}</div>}
+      </div>
+    </div>
+  );
+}
