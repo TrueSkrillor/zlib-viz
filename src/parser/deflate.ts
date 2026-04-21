@@ -15,7 +15,7 @@ export type DeflateResult = {
 
 const INITIAL_DECODED_CAP = 4096;
 
-export function parseDeflate(r: BitReader, streamStartBit = 0): DeflateResult {
+export function parseDeflate(r: BitReader): DeflateResult {
   const blocks: Block[] = [];
   const errors: ParseError[] = [];
   let decoded = new Uint8Array(INITIAL_DECODED_CAP);
@@ -102,8 +102,6 @@ export function parseDeflate(r: BitReader, streamStartBit = 0): DeflateResult {
       bitPos: r.bitPos,
     });
   }
-
-  void streamStartBit;
 
   return { blocks, decoded: decoded.subarray(0, decodedLen).slice(), errors };
 }
