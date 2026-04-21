@@ -13,13 +13,14 @@ export type Depth = 1 | 2 | 3;
 
 export type UiState = {
   parsed: ParsedStream | null;
+  inputBytes: Uint8Array | null;
   selection: Selection;
   hover: BitRange | null;
   depth: Depth;
   bytesPaneTab: 'hex' | 'bits';
   structurePaneTab: 'tree' | 'bit-layout' | 'huffman' | 'code-len';
   outputPaneTab: 'text' | 'hex' | 'tokens';
-  setParsed: (p: ParsedStream | null) => void;
+  setParsed: (p: ParsedStream | null, bytes?: Uint8Array) => void;
   setSelection: (s: Selection) => void;
   setHover: (h: BitRange | null) => void;
   setDepth: (d: Depth) => void;
@@ -30,13 +31,17 @@ export type UiState = {
 
 export const useUiStore = create<UiState>((set) => ({
   parsed: null,
+  inputBytes: null,
   selection: { kind: 'none' },
   hover: null,
   depth: 3,
   bytesPaneTab: 'hex',
   structurePaneTab: 'tree',
   outputPaneTab: 'text',
-  setParsed: (parsed) => set({ parsed, selection: { kind: 'none' }, hover: null }),
+  setParsed: (parsed, bytes = undefined) => set({
+    parsed, inputBytes: bytes ?? null,
+    selection: { kind: 'none' }, hover: null,
+  }),
   setSelection: (selection) => set({ selection }),
   setHover: (hover) => set({ hover }),
   setDepth: (depth) => set({ depth }),

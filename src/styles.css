@@ -59,3 +59,9 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .timeline .seg.wrap,
 .timeline .seg.trailer { background: #14532d; }
 .timeline .seg.active { outline: 2px solid #fde047; outline-offset: -2px; }
+.hex-row { display: grid; grid-template-columns: 64px 1fr 120px; gap: 8px; align-items: center; white-space: pre; }
+.hex-row .off { color: #475569; }
+.hex-row .hx { letter-spacing: 1px; color: #c8d0de; }
+.hex-row .hx .hi { background: rgba(253, 224, 71, 0.15); color: #fde047; border-radius: 2px; }
+.hex-row .hx .hi.sel { background: rgba(253, 224, 71, 0.35); }
+.hex-row .ascii { color: #6c7388; }

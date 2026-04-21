@@ -1,9 +1,11 @@
 import { useUiStore } from '../../state/selection';
 import { Tabs } from '../common/Tabs';
+import { HexTab } from './HexTab';
 
 export function BytesPane() {
   const tab = useUiStore(s => s.bytesPaneTab);
   const setTab = useUiStore(s => s.setBytesPaneTab);
+  const bytes = useUiStore(s => s.inputBytes);
   return (
     <div className="pane">
       <div className="pane-header">Bytes · Bits</div>
@@ -12,7 +14,9 @@ export function BytesPane() {
         value={tab}
         onChange={setTab}
       />
-      <div className="pane-body">(bytes pane — filled in next task)</div>
+      <div className="pane-body" style={{ padding: 0 }}>
+        {bytes && tab === 'hex' && <HexTab bytes={bytes} />}
+      </div>
     </div>
   );
 }

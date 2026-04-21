@@ -11,8 +11,9 @@ export function InputArea() {
   const onBytes = useCallback(async (bytes: Uint8Array) => {
     setStatus({ kind: 'parsing' });
     try {
-      const parsed = await parseInWorker(bytes);
-      setParsed(parsed);
+      const kept = new Uint8Array(bytes);          // keep a copy for the store
+      const parsed = await parseInWorker(bytes);   // transfers the original buffer
+      setParsed(parsed, kept);
       setStatus({ kind: 'idle' });
     } catch (e) {
       setStatus({ kind: 'error', message: e instanceof Error ? e.message : String(e) });
