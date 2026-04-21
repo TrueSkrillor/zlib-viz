@@ -1,5 +1,8 @@
 import { useUiStore } from '../../state/selection';
 import { Tabs } from '../common/Tabs';
+import { OutputTextTab } from './OutputTextTab';
+import { OutputHexTab } from './OutputHexTab';
+import { TokensTab } from './TokensTab';
 
 export function OutputPane() {
   const tab = useUiStore(s => s.outputPaneTab);
@@ -16,7 +19,11 @@ export function OutputPane() {
         value={tab}
         onChange={setTab}
       />
-      <div className="pane-body">(output pane — filled in next tasks)</div>
+      <div className="pane-body" style={{ padding: 0 }}>
+        {tab === 'text' && <OutputTextTab />}
+        {tab === 'hex' && <OutputHexTab />}
+        {tab === 'tokens' && <TokensTab />}
+      </div>
     </div>
   );
 }
