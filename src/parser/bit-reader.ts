@@ -26,7 +26,12 @@ export class BitReader {
 
   peek(n: number): number {
     if (n < 1 || n > 16) throw new RangeError(`peek: n must be 1..16, got ${n}`);
-    if (this.pos + n > this.totalBits) throw new RangeError('peek: past EOF');
+    if (this.pos + n > this.totalBits) {
+      // Allow peeking past the last byte boundary: pad missing bits with zeros.
+      // DEFLATE streams may be padded to a byte boundary after end-of-block.
+      if (this.pos >= this.totalBits) throw new RangeError('peek: past EOF');
+      return this.readBitsUnchecked(this.totalBits - this.pos);
+    }
     return this.readBitsUnchecked(n);
   }
 

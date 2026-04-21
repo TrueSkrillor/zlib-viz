@@ -1,5 +1,10 @@
 import { BitReader } from './bit-reader';
-import type { Block, ParseError, StoredBody } from './types';
+import { buildHuffmanTable, decodeSymbol } from './huffman';
+import {
+  DIST_BASE, DIST_EXTRA, FIXED_DIST_LENGTHS, FIXED_LITLEN_LENGTHS,
+  LENGTH_BASE, LENGTH_EXTRA,
+} from './constants';
+import type { Block, HuffmanBody, HuffmanTable, ParseError, StoredBody, Symbol as DeflateSymbol } from './types';
 
 export type DeflateResult = {
   blocks: Block[];
@@ -35,6 +40,15 @@ export function parseDeflate(r: BitReader, streamStartBit = 0): DeflateResult {
     decodedLen += src.length;
   };
 
+  const copyFromOutput = (distance: number, length: number): { srcStart: number; srcEnd: number } => {
+    const srcStart = decodedLen - distance;
+    if (srcStart < 0) throw new Error(`back-ref distance ${distance} exceeds output length ${decodedLen}`);
+    ensureCapacity(length);
+    for (let i = 0; i < length; i++) decoded[decodedLen + i] = decoded[srcStart + i];
+    decodedLen += length;
+    return { srcStart, srcEnd: srcStart + length };
+  };
+
   try {
     while (true) {
       const blockStart = r.bitPos;
@@ -54,8 +68,18 @@ export function parseDeflate(r: BitReader, streamStartBit = 0): DeflateResult {
           body,
           outputRange: { start: outputStart, end: decodedLen },
         });
-      } else if (btype === 0b01 || btype === 0b10) {
-        throw new Error(`btype ${btype} not supported yet`);
+      } else if (btype === 0b01) {
+        const body = parseHuffmanBlock(r, 'fixed', writeByte, copyFromOutput, () => decodedLen);
+        blocks.push({
+          index: blocks.length,
+          bfinal, btype: 'fixed',
+          range: { start: blockStart, end: r.bitPos },
+          headerRange,
+          body,
+          outputRange: { start: outputStart, end: decodedLen },
+        });
+      } else if (btype === 0b10) {
+        throw new Error('dynamic Huffman not supported yet');
       } else {
         throw new Error(`reserved btype (0b11) at bit ${blockStart}`);
       }
@@ -71,7 +95,6 @@ export function parseDeflate(r: BitReader, streamStartBit = 0): DeflateResult {
   }
 
   void streamStartBit;
-  void writeByte;
 
   return { blocks, decoded: decoded.subarray(0, decodedLen).slice(), errors };
 }
@@ -97,4 +120,77 @@ function parseStoredBlock(r: BitReader): StoredBody {
     payloadRange: { start: payloadStart, end: r.bitPos },
     bytes,
   };
+}
+
+function parseHuffmanBlock(
+  r: BitReader,
+  kind: 'fixed' | 'dynamic',
+  writeByte: (b: number) => void,
+  copyFromOutput: (distance: number, length: number) => { srcStart: number; srcEnd: number },
+  outputLen: () => number,
+): HuffmanBody {
+  if (kind !== 'fixed') {
+    throw new Error('parseHuffmanBlock: only fixed supported in this task');
+  }
+  const litlenTable = buildHuffmanTable(FIXED_LITLEN_LENGTHS);
+  const distTable = buildHuffmanTable(FIXED_DIST_LENGTHS);
+  const symbols = decodeSymbols(r, litlenTable, distTable, writeByte, copyFromOutput, outputLen);
+  return { kind: 'huffman', btype: 'fixed', litlenTable, distTable, symbols };
+}
+
+function decodeSymbols(
+  r: BitReader,
+  litlenTable: HuffmanTable,
+  distTable: HuffmanTable,
+  writeByte: (b: number) => void,
+  copyFromOutput: (distance: number, length: number) => { srcStart: number; srcEnd: number },
+  outputLen: () => number,
+): DeflateSymbol[] {
+  const symbols: DeflateSymbol[] = [];
+  while (true) {
+    const symStart = r.bitPos;
+    const sym = decodeSymbol(r, litlenTable);
+    if (sym < 256) {
+      const outputIndex = outputLen();
+      writeByte(sym);
+      symbols.push({ kind: 'literal', value: sym, bitRange: { start: symStart, end: r.bitPos }, outputIndex });
+      continue;
+    }
+    if (sym === 256) {
+      symbols.push({ kind: 'end-of-block', bitRange: { start: symStart, end: r.bitPos } });
+      return symbols;
+    }
+    const lengthCodeIdx = sym - 257;
+    if (lengthCodeIdx < 0 || lengthCodeIdx >= LENGTH_BASE.length) throw new Error(`invalid length symbol ${sym}`);
+    const lengthCodeRange = { start: symStart, end: r.bitPos };
+    const extraLenBits = LENGTH_EXTRA[lengthCodeIdx];
+    let lengthExtraRange: { start: number; end: number } | undefined;
+    let length = LENGTH_BASE[lengthCodeIdx];
+    if (extraLenBits > 0) {
+      const s = r.bitPos;
+      length += r.readBits(extraLenBits);
+      lengthExtraRange = { start: s, end: r.bitPos };
+    }
+    const distCodeStart = r.bitPos;
+    const distSym = decodeSymbol(r, distTable);
+    const distCodeRange = { start: distCodeStart, end: r.bitPos };
+    if (distSym < 0 || distSym >= DIST_BASE.length) throw new Error(`invalid distance symbol ${distSym}`);
+    const extraDistBits = DIST_EXTRA[distSym];
+    let distExtraRange: { start: number; end: number } | undefined;
+    let distance = DIST_BASE[distSym];
+    if (extraDistBits > 0) {
+      const s = r.bitPos;
+      distance += r.readBits(extraDistBits);
+      distExtraRange = { start: s, end: r.bitPos };
+    }
+    const outputStart = outputLen();
+    const { srcStart, srcEnd } = copyFromOutput(distance, length);
+    symbols.push({
+      kind: 'match',
+      length, distance,
+      lengthCodeRange, lengthExtraRange, distCodeRange, distExtraRange,
+      outputStart, outputEnd: outputStart + length,
+      backrefStart: srcStart, backrefEnd: srcEnd,
+    });
+  }
 }

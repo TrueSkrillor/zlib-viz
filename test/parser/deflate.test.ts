@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { deflateRawSync, constants as zlibConstants } from 'node:zlib';
 import { BitReader } from '../../src/parser/bit-reader';
 import { parseDeflate } from '../../src/parser/deflate';
 
@@ -63,5 +64,42 @@ describe('parseDeflate — stored blocks', () => {
     expect(result.errors.length).toBe(1);
     expect(result.errors[0].severity).toBe('fatal');
     expect(result.errors[0].message).toMatch(/LEN/i);
+  });
+});
+
+describe('parseDeflate — fixed Huffman blocks', () => {
+  it('round-trips a literal-only payload', () => {
+    const input = new TextEncoder().encode('Hello, world!');
+    const compressed = deflateRawSync(Buffer.from(input), { strategy: zlibConstants.Z_FIXED });
+    const result = parseDeflate(new BitReader(new Uint8Array(compressed)));
+    expect(result.errors).toEqual([]);
+    expect(new TextDecoder().decode(result.decoded)).toBe('Hello, world!');
+    expect(result.blocks[0].btype).toBe('fixed');
+    const body = result.blocks[0].body;
+    expect(body.kind).toBe('huffman');
+    if (body.kind === 'huffman') {
+      expect(body.symbols.at(-1)?.kind).toBe('end-of-block');
+      expect(body.symbols.filter(s => s.kind === 'literal')).toHaveLength(input.length);
+    }
+  });
+
+  it('round-trips a payload that uses back-references', () => {
+    const repeated = 'abcabcabcabcabcabcabcabc';
+    const compressed = deflateRawSync(Buffer.from(repeated), { strategy: zlibConstants.Z_FIXED });
+    const result = parseDeflate(new BitReader(new Uint8Array(compressed)));
+    expect(new TextDecoder().decode(result.decoded)).toBe(repeated);
+    const body = result.blocks[0].body;
+    if (body.kind === 'huffman') {
+      const matches = body.symbols.filter(s => s.kind === 'match');
+      expect(matches.length).toBeGreaterThan(0);
+      for (const m of matches) {
+        if (m.kind !== 'match') continue;
+        expect(m.length).toBeGreaterThanOrEqual(3);
+        expect(m.length).toBeLessThanOrEqual(258);
+        expect(m.distance).toBeGreaterThanOrEqual(1);
+        expect(m.backrefEnd - m.backrefStart).toBe(m.length);
+        expect(m.outputEnd - m.outputStart).toBe(m.length);
+      }
+    }
   });
 });
