@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { useUiStore } from '../../state/selection';
 import { Tabs } from '../common/Tabs';
 import { BitLayoutTab } from './BitLayoutTab';
@@ -9,12 +8,6 @@ import { TreeTab } from './TreeTab';
 export function StructurePane() {
   const tab = useUiStore(s => s.structurePaneTab);
   const setTab = useUiStore(s => s.setStructurePaneTab);
-  const depth = useUiStore(s => s.depth);
-
-  useEffect(() => {
-    const disabled = (tab === 'bit-layout' && depth < 3) || (tab === 'huffman' && depth < 2) || (tab === 'code-len' && depth < 3);
-    if (disabled) setTab('tree');
-  }, [tab, depth, setTab]);
 
   return (
     <div className="pane">
@@ -22,9 +15,9 @@ export function StructurePane() {
       <Tabs
         tabs={[
           { id: 'tree', label: 'Tree' },
-          { id: 'bit-layout', label: 'Bit layout', disabled: depth < 3 },
-          { id: 'huffman', label: 'Huffman trees', disabled: depth < 2 },
-          { id: 'code-len', label: 'Code-len alphabet', disabled: depth < 3 },
+          { id: 'bit-layout', label: 'Bit layout' },
+          { id: 'huffman', label: 'Huffman trees' },
+          { id: 'code-len', label: 'Code-len alphabet' },
         ]}
         value={tab}
         onChange={setTab}

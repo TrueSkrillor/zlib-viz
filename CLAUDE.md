@@ -81,7 +81,7 @@ Three panes, each virtualised with `react-window`. Two non-obvious things:
 - **Global `*, *::before, *::after { box-sizing: border-box }` is load-bearing.** react-window sets `width: 100%` on absolutely-positioned rows, and with the default `content-box` the row's padding would add on top of 100%, pushing content past the container and clipping the range label on the right.
 - **`useMeasure` (ResizeObserver) feeds real pane heights into every list.** Don't hardcode heights.
 - **Hex / bit-stream rows are responsive** via `rowBytesFor(width)` / `bitsPerRowFor(width)` — 8 bytes / 32 bits per row below 540 px of pane width, 16 / 64 above.
-- **Depth selector is a rendering filter, not a parse knob.** The parser always produces full L3 detail; L1/L2/L3 only affect which rows `buildTreeRows` emits and which Structure tabs are enabled.
+- **The tree is always rendered at full detail.** There is no depth selector; `buildTreeRows` emits every HLIT/HDIST/HCLEN field, the Huffman-tables region, and the symbols group for every Huffman block. The symbols group defaults collapsed (see `isExpanded` / `symbols:*` rule above) so large blocks don't drown the tree.
 
 ## Gotchas the codebase has already tripped on
 

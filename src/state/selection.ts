@@ -10,8 +10,6 @@ export type Selection =
   | { kind: 'blockSection'; blockIndex: number; section: 'huffman-tables' | 'symbols' }
   | { kind: 'symbol'; blockIndex: number; symbolIndex: number };
 
-export type Depth = 1 | 2 | 3;
-
 export function isExpanded(id: string, expansion: Record<string, boolean>): boolean {
   // "symbols:*" groups default collapsed (large blocks would drown the tree).
   // Everything else (block:*) defaults expanded.
@@ -25,7 +23,6 @@ export type UiState = {
   inputBytes: Uint8Array | null;
   selection: Selection;
   hover: BitRange | null;
-  depth: Depth;
   expansion: Record<string, boolean>;
   bytesPaneTab: 'hex' | 'bits';
   structurePaneTab: 'tree' | 'bit-layout' | 'huffman' | 'code-len';
@@ -33,7 +30,6 @@ export type UiState = {
   setParsed: (p: ParsedStream | null, bytes?: Uint8Array) => void;
   setSelection: (s: Selection) => void;
   setHover: (h: BitRange | null) => void;
-  setDepth: (d: Depth) => void;
   toggleExpand: (id: string) => void;
   setBytesPaneTab: (t: UiState['bytesPaneTab']) => void;
   setStructurePaneTab: (t: UiState['structurePaneTab']) => void;
@@ -45,7 +41,6 @@ export const useUiStore = create<UiState>((set) => ({
   inputBytes: null,
   selection: { kind: 'none' },
   hover: null,
-  depth: 3,
   expansion: {},
   bytesPaneTab: 'hex',
   structurePaneTab: 'tree',
@@ -57,7 +52,6 @@ export const useUiStore = create<UiState>((set) => ({
   }),
   setSelection: (selection) => set({ selection }),
   setHover: (hover) => set({ hover }),
-  setDepth: (depth) => set({ depth }),
   toggleExpand: (id) => set((s) => ({
     expansion: { ...s.expansion, [id]: !isExpanded(id, s.expansion) },
   })),

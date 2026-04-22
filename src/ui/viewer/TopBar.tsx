@@ -1,5 +1,4 @@
 import { useUiStore } from '../../state/selection';
-import { DepthSelector } from './DepthSelector';
 
 export function TopBar() {
   const parsed = useUiStore(s => s.parsed);
@@ -14,7 +13,6 @@ export function TopBar() {
       <span className="pill">decoded {parsed.decoded.length.toLocaleString()} bytes</span>
       {parsed.errors.length > 0 && <span className="pill" style={{ background: '#7f1d1d' }}>{parsed.errors.length} issue(s)</span>}
       <div className="spacer" />
-      <DepthSelector />
     </div>
   );
 }

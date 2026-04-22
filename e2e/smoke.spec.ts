@@ -7,20 +7,16 @@ test('loads, picks a built-in example, renders viewer with three panes', async (
   await expect(page.locator('.topbar')).toBeVisible();
   await expect(page.locator('.timeline')).toBeVisible();
   await expect(page.locator('.three-pane .pane')).toHaveCount(3);
-  await expect(page.locator('.depth-selector button.active')).toHaveText('L3');
 });
 
-test('depth selector gates disabled tabs correctly', async ({ page }) => {
+test('all Structure tabs are enabled and switchable', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: /Dynamic Huffman/i }).click();
-  await page.getByRole('button', { name: 'L1' }).click();
-  await expect(page.locator('button:has-text("Bit layout")')).toBeDisabled();
-  await expect(page.locator('button:has-text("Huffman trees")')).toBeDisabled();
-  await page.getByRole('button', { name: 'L2' }).click();
-  await expect(page.locator('button:has-text("Huffman trees")')).toBeEnabled();
-  await expect(page.locator('button:has-text("Bit layout")')).toBeDisabled();
-  await page.getByRole('button', { name: 'L3' }).click();
-  await expect(page.locator('button:has-text("Bit layout")')).toBeEnabled();
+  for (const name of ['Bit layout', 'Huffman trees', 'Code-len alphabet', 'Tree']) {
+    const btn = page.locator('.three-pane .pane:nth-child(2) .tabs button', { hasText: new RegExp(`^${name}$`) });
+    await expect(btn).toBeEnabled();
+    await btn.click();
+  }
 });
 
 test('clicking a byte in hex selects a structural node (tree shows an active row)', async ({ page }) => {

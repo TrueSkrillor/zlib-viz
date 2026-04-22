@@ -17,7 +17,7 @@ Existing DEFLATE decoders (`zlib`, `pako`, `fflate`, etc.) give you the decompre
 
 It's intended for two audiences:
 
-- **Students and educators** learning how DEFLATE works. Start with `L1` to see the overall block structure, step up to `L3` to see individual bit fields.
+- **Students and educators** learning how DEFLATE works. The tree decomposes every block down to individual bit fields; use the caret on "Block N" or "symbols (N)" to collapse detail you don't need.
 - **Researchers and engineers** poking at real-world compressed blobs from PNG chunks, HTTP bodies, PDF streams, or arbitrary buffers.
 
 ## Features
@@ -25,7 +25,7 @@ It's intended for two audiences:
 - Auto-detects zlib / gzip / raw DEFLATE from the magic bytes.
 - Full bit-level decomposition — wrapper header, every block header, the dynamic-Huffman meta region (HLIT/HDIST/HCLEN, code-length code lengths, RLE-encoded lit/len and distance code lengths), every literal, every match with its back-reference region.
 - Three linked, virtualised panes — raw **Bytes** (hex or bit stream), parsed **Structure** (collapsible tree, bit-layout ruler, Huffman alphabet tables, code-length alphabet), and **Decoded output** (text, hex, or token list).
-- Runtime depth selector (`L1`/`L2`/`L3`) gates how much detail the tree shows without re-parsing.
+- Every block and its symbols group is collapsible in the tree; the "symbols (N)" subtree defaults to collapsed to keep large blocks scannable.
 - Block timeline strip across the top, colour-coded by block type and sized proportionally to compressed bytes.
 - Drag-and-drop, file picker, hex/base64 paste, and a built-in examples library.
 - Parses up to ~10 MB inputs in a Web Worker so the UI stays responsive.
@@ -76,8 +76,6 @@ Once parsed, the viewer opens. Any selection or hover in one pane is reflected i
 - **Bytes pane** (left): hex dump and bit stream. Click any byte/bit to select the innermost structural node containing it.
 - **Structure pane** (middle): the parsed tree. Click the caret to collapse/expand a block or the symbols group. Switch tabs for a horizontal bit-layout ruler, sorted Huffman codeword tables, or the code-length alphabet + RLE expansion view.
 - **Output pane** (right): decoded text, decoded hex, or the literal/match token list. Selecting a match token highlights its source region.
-
-The **L1 / L2 / L3** buttons in the top bar control how much detail the Structure tree exposes — L1 shows just wrapper + blocks + trailer, L3 shows every bit-level field including per-symbol rows.
 
 ## Tech stack
 

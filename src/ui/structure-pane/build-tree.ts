@@ -1,8 +1,8 @@
 import type { ParsedStream } from '../../parser/types';
-import { isExpanded, type Depth, type Selection } from '../../state/selection';
+import { isExpanded, type Selection } from '../../state/selection';
 
 export type TreeRow = {
-  depth: number;
+  depth: number;       // indent depth in the rendered tree, NOT the old L1/L2/L3 gate
   id?: string;         // stable key for collapse tracking, only set on rows whose children toggle
   label: string;
   detail?: string;
@@ -14,7 +14,6 @@ export type TreeRow = {
 
 export function buildTreeRows(
   parsed: ParsedStream,
-  depth: Depth,
   expansion: Record<string, boolean> = {},
 ): TreeRow[] {
   const rows: TreeRow[] = [];
@@ -39,21 +38,19 @@ export function buildTreeRows(
       detail: `${(b.range.end - b.range.start) >> 3} bytes`,
       rangeText: rangeText(b.range),
       selection: { kind: 'block', blockIndex: b.index },
-      expandable: depth >= 2,
+      expandable: true,
       expanded: blockExpanded,
     });
-    if (!blockExpanded || depth < 2) continue;
+    if (!blockExpanded) continue;
 
     if (b.body.kind === 'huffman' && b.body.dynamicMeta) {
       const m = b.body.dynamicMeta;
-      if (depth >= 3) {
-        rows.push({ depth: 1, label: `HLIT=${m.hlit}`, rangeText: rangeText(m.hlitRange),
-          selection: { kind: 'blockField', blockIndex: b.index, fieldPath: ['body', 'dynamicMeta', 'hlitRange'] }, expandable: false });
-        rows.push({ depth: 1, label: `HDIST=${m.hdist}`, rangeText: rangeText(m.hdistRange),
-          selection: { kind: 'blockField', blockIndex: b.index, fieldPath: ['body', 'dynamicMeta', 'hdistRange'] }, expandable: false });
-        rows.push({ depth: 1, label: `HCLEN=${m.hclen}`, rangeText: rangeText(m.hclenRange),
-          selection: { kind: 'blockField', blockIndex: b.index, fieldPath: ['body', 'dynamicMeta', 'hclenRange'] }, expandable: false });
-      }
+      rows.push({ depth: 1, label: `HLIT=${m.hlit}`, rangeText: rangeText(m.hlitRange),
+        selection: { kind: 'blockField', blockIndex: b.index, fieldPath: ['body', 'dynamicMeta', 'hlitRange'] }, expandable: false });
+      rows.push({ depth: 1, label: `HDIST=${m.hdist}`, rangeText: rangeText(m.hdistRange),
+        selection: { kind: 'blockField', blockIndex: b.index, fieldPath: ['body', 'dynamicMeta', 'hdistRange'] }, expandable: false });
+      rows.push({ depth: 1, label: `HCLEN=${m.hclen}`, rangeText: rangeText(m.hclenRange),
+        selection: { kind: 'blockField', blockIndex: b.index, fieldPath: ['body', 'dynamicMeta', 'hclenRange'] }, expandable: false });
       rows.push({
         depth: 1,
         label: 'Huffman tables',
@@ -71,10 +68,10 @@ export function buildTreeRows(
         id: symbolsId,
         label: `symbols (${b.body.symbols.length})`,
         selection: { kind: 'blockSection', blockIndex: b.index, section: 'symbols' },
-        expandable: depth >= 3 && b.body.symbols.length > 0,
+        expandable: b.body.symbols.length > 0,
         expanded: symbolsExpanded,
       });
-      if (symbolsExpanded && depth >= 3) {
+      if (symbolsExpanded) {
         for (let i = 0; i < b.body.symbols.length; i++) {
           const s = b.body.symbols[i];
           const label = s.kind === 'literal' ? `lit ${s.value} ${printable(s.value)}`

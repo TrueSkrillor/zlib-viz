@@ -29,11 +29,6 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .topbar .pill { background: #272d39; padding: 2px 8px; border-radius: 10px; font-size: 12px; }
 .topbar .pill.detect { background: #065f46; color: #a7f3d0; }
 .topbar .spacer { flex: 1; }
-.depth-selector button {
-  background: #272d39; color: #e0e7ff; border: 0; padding: 4px 10px; border-radius: 4px;
-  margin-left: 2px; cursor: pointer;
-}
-.depth-selector button.active { background: #3b82f6; }
 .three-pane {
   display: grid;
   grid-template-columns: minmax(460px, 1.1fr) minmax(360px, 1.2fr) minmax(300px, 1fr);

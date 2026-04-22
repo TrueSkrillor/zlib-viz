@@ -9,15 +9,14 @@ const ROW_HEIGHT = 20;
 
 export function TreeTab() {
   const parsed = useUiStore(s => s.parsed);
-  const depth = useUiStore(s => s.depth);
   const selection = useUiStore(s => s.selection);
   const expansion = useUiStore(s => s.expansion);
   const setSelection = useUiStore(s => s.setSelection);
   const toggleExpand = useUiStore(s => s.toggleExpand);
   const setHover = useUiStore(s => s.setHover);
   const rows: TreeRow[] = useMemo(
-    () => (parsed ? buildTreeRows(parsed, depth, expansion) : []),
-    [parsed, depth, expansion],
+    () => (parsed ? buildTreeRows(parsed, expansion) : []),
+    [parsed, expansion],
   );
 
   const selectedIdx = useMemo(
