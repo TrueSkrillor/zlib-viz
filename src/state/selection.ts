@@ -18,6 +18,26 @@ export function isExpanded(id: string, expansion: Record<string, boolean>): bool
   return !id.startsWith('symbols:');
 }
 
+function ensureAncestorsExpanded(
+  selection: Selection,
+  expansion: Record<string, boolean>,
+): Record<string, boolean> {
+  const needsOpen: string[] = [];
+  if (selection.kind === 'symbol') {
+    needsOpen.push(`block:${selection.blockIndex}`, `symbols:${selection.blockIndex}`);
+  } else if (selection.kind === 'blockField' || selection.kind === 'blockSection') {
+    needsOpen.push(`block:${selection.blockIndex}`);
+  }
+  let next = expansion;
+  for (const id of needsOpen) {
+    if (!isExpanded(id, next)) {
+      if (next === expansion) next = { ...expansion };
+      next[id] = true;
+    }
+  }
+  return next;
+}
+
 export type UiState = {
   parsed: ParsedStream | null;
   inputBytes: Uint8Array | null;
@@ -50,7 +70,13 @@ export const useUiStore = create<UiState>((set) => ({
     selection: { kind: 'none' }, hover: null,
     expansion: {},
   }),
-  setSelection: (selection) => set({ selection }),
+  setSelection: (selection) => set((s) => {
+    // Auto-expand the ancestor rows of the new selection so the matching
+    // tree row becomes visible when the user clicks into a symbol or a
+    // block sub-field from the bytes / decoded panes.
+    const expansion = ensureAncestorsExpanded(selection, s.expansion);
+    return expansion === s.expansion ? { selection } : { selection, expansion };
+  }),
   setHover: (hover) => set({ hover }),
   toggleExpand: (id) => set((s) => ({
     expansion: { ...s.expansion, [id]: !isExpanded(id, s.expansion) },
