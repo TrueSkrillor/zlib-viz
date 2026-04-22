@@ -37,28 +37,28 @@ export function HexTab({ bytes }: { bytes: Uint8Array }) {
     const off = index * rowBytes;
     const end = Math.min(off + rowBytes, bytes.length);
     const hexParts: React.ReactNode[] = [];
-    const asciiChars: string[] = [];
+    const asciiParts: React.ReactNode[] = [];
     for (let i = off; i < end; i++) {
       const inSel = selRange ? i * 8 < selRange.end && (i + 1) * 8 > selRange.start : false;
       const inHover = hiRange ? i * 8 < hiRange.end && (i + 1) * 8 > hiRange.start : false;
       const cls = inSel ? 'hi sel' : inHover ? 'hi' : '';
+      const onByteClick = () => parsed && setSelection(findSelectionAtBit(parsed, i * 8));
       hexParts.push(
-        <span
-          key={i}
-          className={cls}
-          onClick={() => parsed && setSelection(findSelectionAtBit(parsed, i * 8))}
-        >
+        <span key={i} className={cls} onClick={onByteClick}>
           {bytes[i].toString(16).padStart(2, '0')}{i < end - 1 ? ' ' : ''}
         </span>,
       );
       const c = bytes[i];
-      asciiChars.push(c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : '·');
+      const glyph = c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : '·';
+      asciiParts.push(
+        <span key={i} className={cls} onClick={onByteClick}>{glyph}</span>,
+      );
     }
     return (
       <div className="hex-row" style={style}>
         <span className="off">{off.toString(16).padStart(6, '0')}</span>
         <span className="hx">{hexParts}</span>
-        <span className="ascii">{asciiChars.join('')}</span>
+        <span className="ascii">{asciiParts}</span>
       </div>
     );
   }, [bytes, selRange, hiRange, setSelection, parsed, rowBytes]);

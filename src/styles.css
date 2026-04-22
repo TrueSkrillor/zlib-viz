@@ -63,9 +63,12 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .hex-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 6px; align-items: center; white-space: pre; padding: 0 6px; font-size: 11.5px; }
 .hex-row .off { color: #475569; font-variant-numeric: tabular-nums; }
 .hex-row .hx { color: #c8d0de; overflow: hidden; }
-.hex-row .hx .hi { background: rgba(253, 224, 71, 0.15); color: #fde047; border-radius: 2px; }
-.hex-row .hx .hi.sel { background: rgba(253, 224, 71, 0.35); }
+.hex-row .hx .hi,
+.hex-row .ascii .hi { background: rgba(253, 224, 71, 0.15); color: #fde047; border-radius: 2px; cursor: pointer; }
+.hex-row .hx .hi.sel,
+.hex-row .ascii .hi.sel { background: rgba(253, 224, 71, 0.35); }
 .hex-row .ascii { color: #6c7388; flex-shrink: 0; }
+.hex-row .hx > span, .hex-row .ascii > span { cursor: pointer; }
 .bits-row { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 8px; align-items: center; white-space: pre; padding: 0 6px; font-size: 11.5px; }
 .bits-row .off { color: #475569; font-variant-numeric: tabular-nums; }
 .bits-row .bts { color: #94a3b8; overflow: hidden; }
@@ -115,8 +118,11 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .output-hex-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 6px; align-items: center; white-space: pre; padding: 0 6px; font-size: 11.5px; }
 .output-hex-row .off { color: #475569; font-variant-numeric: tabular-nums; }
 .output-hex-row .hx { color: #c8d0de; overflow: hidden; }
-.output-hex-row .hx .hi { background: rgba(253, 224, 71, 0.15); color: #fde047; border-radius: 2px; }
-.output-hex-row .hx .hi.sel { background: rgba(253, 224, 71, 0.35); }
+.output-hex-row .hx .hi,
+.output-hex-row .ascii .hi { background: rgba(253, 224, 71, 0.15); color: #fde047; border-radius: 2px; cursor: pointer; }
+.output-hex-row .hx > span, .output-hex-row .ascii > span { cursor: pointer; }
+.output-hex-row .hx .hi.sel,
+.output-hex-row .ascii .hi.sel { background: rgba(253, 224, 71, 0.35); }
 .output-hex-row .ascii { color: #6c7388; flex-shrink: 0; }
 .tokens-row { display: grid; grid-template-columns: 48px 70px minmax(0, 1fr) auto; gap: 8px; align-items: center; font-family: ui-monospace, monospace; font-size: 11px; padding: 0 8px; color: #c8d0de; cursor: pointer; white-space: nowrap; overflow: hidden; }
 .tokens-row:hover { background: #1a1f2b; }

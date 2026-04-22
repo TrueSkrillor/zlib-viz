@@ -32,29 +32,29 @@ export function OutputHexTab() {
   const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
     const off = index * rowBytes;
     const end = Math.min(off + rowBytes, decoded.length);
-    const parts: React.ReactNode[] = [];
-    const asciiChars: string[] = [];
+    const hexParts: React.ReactNode[] = [];
+    const asciiParts: React.ReactNode[] = [];
     for (let i = off; i < end; i++) {
       const inSel = resolved.outputRange ? i >= resolved.outputRange.start && i < resolved.outputRange.end : false;
       const inBackref = resolved.backrefRange ? i >= resolved.backrefRange.start && i < resolved.backrefRange.end : false;
       const cls = inSel ? 'hi sel' : inBackref ? 'hi' : '';
-      parts.push(
-        <span
-          key={i}
-          className={cls}
-          onClick={() => parsed && setSelection(findSelectionAtOutputByte(parsed, i))}
-        >
+      const onByteClick = () => parsed && setSelection(findSelectionAtOutputByte(parsed, i));
+      hexParts.push(
+        <span key={i} className={cls} onClick={onByteClick}>
           {decoded[i].toString(16).padStart(2, '0')}{i < end - 1 ? ' ' : ''}
         </span>,
       );
       const c = decoded[i];
-      asciiChars.push(c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : '·');
+      const glyph = c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : '·';
+      asciiParts.push(
+        <span key={i} className={cls} onClick={onByteClick}>{glyph}</span>,
+      );
     }
     return (
       <div className="output-hex-row" style={style}>
         <span className="off">{off.toString(16).padStart(6, '0')}</span>
-        <span className="hx">{parts}</span>
-        <span className="ascii">{asciiChars.join('')}</span>
+        <span className="hx">{hexParts}</span>
+        <span className="ascii">{asciiParts}</span>
       </div>
     );
   }, [decoded, resolved, rowBytes, parsed, setSelection]);
