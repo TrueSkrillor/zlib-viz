@@ -15,10 +15,21 @@ export function OutputTextTab() {
   const setSelection = useUiStore(s => s.setSelection);
   const resolved = useMemo(() => resolveSelection(selection, parsed), [selection, parsed]);
 
+  // Render the decoded output with a *strict 1 char per byte* mapping so that byte
+  // offsets from the parser (block.outputRange, symbol.outputStart, …) line up
+  // exactly with JS string indices. Using TextDecoder('utf-8') silently collapsed
+  // every invalid sequence to a single U+FFFD char, so on binary payloads the
+  // string drifted shorter than the byte array and highlight ranges landed in
+  // wrong places (or off the end entirely).
   const text = useMemo(() => {
     if (!parsed) return '';
-    try { return new TextDecoder('utf-8', { fatal: false }).decode(parsed.decoded); }
-    catch { return ''; }
+    const d = parsed.decoded;
+    const out = new Array<string>(d.length);
+    for (let i = 0; i < d.length; i++) {
+      const b = d[i];
+      out[i] = (b >= 0x20 && b < 0x7f) || b >= 0xa0 ? String.fromCharCode(b) : '·';
+    }
+    return out.join('');
   }, [parsed]);
 
   // Compute a visible window that always contains the current highlight + backref
