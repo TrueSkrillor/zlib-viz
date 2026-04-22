@@ -43,6 +43,15 @@ export function buildTreeRows(
     });
     if (!blockExpanded) continue;
 
+    // Block header — the 3-bit BFINAL + BTYPE at the very start of the block.
+    rows.push({
+      depth: 1,
+      label: `block header (BFINAL=${b.bfinal ? 1 : 0}, BTYPE=${b.btype})`,
+      rangeText: rangeText(b.headerRange),
+      selection: { kind: 'blockField', blockIndex: b.index, fieldPath: ['headerRange'] },
+      expandable: false,
+    });
+
     if (b.body.kind === 'huffman' && b.body.dynamicMeta) {
       const m = b.body.dynamicMeta;
       rows.push({ depth: 1, label: `HLIT=${m.hlit}`, rangeText: rangeText(m.hlitRange),

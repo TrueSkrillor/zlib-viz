@@ -11,11 +11,13 @@ export type Selection =
   | { kind: 'symbol'; blockIndex: number; symbolIndex: number };
 
 export function isExpanded(id: string, expansion: Record<string, boolean>): boolean {
-  // "symbols:*" groups default collapsed (large blocks would drown the tree).
-  // Everything else (block:*) defaults expanded.
+  // All collapsible rows default closed. The tree opens to a clean minimal
+  // view (wrapper + blocks + trailer) and the user drills in as needed;
+  // setSelection auto-expands ancestors when a byte click targets a row
+  // inside a collapsed branch.
   const override = expansion[id];
   if (override !== undefined) return override;
-  return !id.startsWith('symbols:');
+  return false;
 }
 
 function ensureAncestorsExpanded(
