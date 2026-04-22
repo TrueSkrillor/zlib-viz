@@ -131,7 +131,7 @@ The design and implementation plan live in the repo:
 
 ## License
 
-TBD.
+[MIT](LICENSE) © 2026 Fabian Bäumer
 
 ---
 
