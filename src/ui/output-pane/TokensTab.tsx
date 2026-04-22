@@ -51,7 +51,7 @@ export function TokensTab() {
   return (
     <div ref={hostRef} style={{ width: '100%', height: '100%' }}>
       {width > 0 && height > 0 && (
-        <FixedSizeList ref={listRef} height={height} width={width} itemSize={ROW_HEIGHT} itemCount={symbols.length}>
+        <FixedSizeList ref={listRef} height={height} width={width} itemSize={ROW_HEIGHT} itemCount={symbols.length} style={{ overflowX: 'hidden' }}>
           {Row}
         </FixedSizeList>
       )}

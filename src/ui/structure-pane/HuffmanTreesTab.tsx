@@ -51,7 +51,7 @@ function HuffmanList({ table }: { table: HuffmanTable }) {
   return (
     <div ref={hostRef} style={{ width: '100%', height: '100%' }}>
       {width > 0 && height > 0 && (
-        <FixedSizeList height={height} width={width} itemSize={ROW_HEIGHT} itemCount={rows.length}>
+        <FixedSizeList height={height} width={width} itemSize={ROW_HEIGHT} itemCount={rows.length} style={{ overflowX: 'hidden' }}>
           {Row}
         </FixedSizeList>
       )}

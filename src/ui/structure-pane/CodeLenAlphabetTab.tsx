@@ -63,14 +63,14 @@ export function CodeLenAlphabetTab() {
     <div className="code-len-grid">
       <Section title={`Code-length lengths (${m.codeLenCodeLengths.length}×3 bits)`}>
         {(w, h) => (
-          <FixedSizeList height={h} width={w} itemSize={ROW_HEIGHT} itemCount={m.codeLenCodeLengths.length}>
+          <FixedSizeList height={h} width={w} itemSize={ROW_HEIGHT} itemCount={m.codeLenCodeLengths.length} style={{ overflowX: 'hidden' }}>
             {Code}
           </FixedSizeList>
         )}
       </Section>
       <Section title={`RLE expansion (${allRle.length} entries)`}>
         {(w, h) => (
-          <FixedSizeList height={h} width={w} itemSize={ROW_HEIGHT} itemCount={allRle.length}>
+          <FixedSizeList height={h} width={w} itemSize={ROW_HEIGHT} itemCount={allRle.length} style={{ overflowX: 'hidden' }}>
             {Rle}
           </FixedSizeList>
         )}

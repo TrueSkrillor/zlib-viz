@@ -72,6 +72,7 @@ export function HexTab({ bytes }: { bytes: Uint8Array }) {
           width={width}
           itemSize={ROW_HEIGHT}
           itemCount={rowCount}
+          style={{ overflowX: 'hidden' }}
         >
           {Row}
         </FixedSizeList>
