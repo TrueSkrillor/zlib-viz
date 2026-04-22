@@ -30,4 +30,26 @@ describe('findSelectionAtBit', () => {
   it('returns none for a bit outside all ranges', () => {
     expect(findSelectionAtBit(parsed, parsed.totalBytes * 8 + 100).kind).toBe('none');
   });
+
+  it('returns blockField selection for bits inside HLIT/HDIST/HCLEN of a dynamic block', () => {
+    const seed = Buffer.from(
+      'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt.\n'.repeat(30),
+    );
+    const dyn = parseStream(new Uint8Array(deflateSync(seed)));
+    const b = dyn.blocks.find(x => x.btype === 'dynamic');
+    if (!b || b.body.kind !== 'huffman' || !b.body.dynamicMeta) throw new Error('need dynamic block');
+    const m = b.body.dynamicMeta;
+
+    const hlitSel = findSelectionAtBit(dyn, m.hlitRange.start + 2);
+    expect(hlitSel.kind).toBe('blockField');
+    if (hlitSel.kind === 'blockField') expect(hlitSel.fieldPath).toEqual(['body', 'dynamicMeta', 'hlitRange']);
+
+    const hdistSel = findSelectionAtBit(dyn, m.hdistRange.start + 1);
+    expect(hdistSel.kind).toBe('blockField');
+    if (hdistSel.kind === 'blockField') expect(hdistSel.fieldPath).toEqual(['body', 'dynamicMeta', 'hdistRange']);
+
+    const hclenSel = findSelectionAtBit(dyn, m.hclenRange.start + 1);
+    expect(hclenSel.kind).toBe('blockField');
+    if (hclenSel.kind === 'blockField') expect(hclenSel.fieldPath).toEqual(['body', 'dynamicMeta', 'hclenRange']);
+  });
 });

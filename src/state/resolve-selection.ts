@@ -24,8 +24,7 @@ export function resolveSelection(s: Selection, p: ParsedStream | null): Resolved
     const b = p.blocks[s.blockIndex];
     if (!b) return { bitRange: null, outputRange: null };
     const field = lookupField(b, s.fieldPath);
-    const range = field && typeof field === 'object' && 'range' in (field as object) ? (field as { range: BitRange }).range : null;
-    return { bitRange: range, outputRange: b.outputRange };
+    return { bitRange: asBitRange(field), outputRange: b.outputRange };
   }
   if (s.kind === 'symbol') {
     const b = p.blocks[s.blockIndex];
@@ -57,4 +56,18 @@ function lookupField(root: unknown, path: (string | number)[]): unknown {
     cur = (cur as Record<string | number, unknown>)[key];
   }
   return cur;
+}
+
+// A field path may terminate at a BitRange directly (e.g. `dynamicMeta.hlitRange`)
+// or at a container object that has a `range: BitRange` property (e.g. wrapper.cmf).
+function asBitRange(v: unknown): BitRange | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, unknown>;
+  if (typeof o.start === 'number' && typeof o.end === 'number') return { start: o.start, end: o.end };
+  const r = o.range;
+  if (r && typeof r === 'object') {
+    const rr = r as Record<string, unknown>;
+    if (typeof rr.start === 'number' && typeof rr.end === 'number') return { start: rr.start, end: rr.end };
+  }
+  return null;
 }
