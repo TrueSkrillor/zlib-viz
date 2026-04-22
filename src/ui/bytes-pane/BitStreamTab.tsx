@@ -5,8 +5,12 @@ import { resolveSelection } from '../../state/resolve-selection';
 import { findSelectionAtBit } from '../../state/find-at-bit';
 import { useMeasure } from '../common/use-measure';
 
-const BITS_PER_ROW = 64;
 const ROW_HEIGHT = 18;
+const WIDE_THRESHOLD = 540;
+
+function bitsPerRowFor(width: number): number {
+  return width >= WIDE_THRESHOLD ? 64 : 32;
+}
 
 export function BitStreamTab({ bytes }: { bytes: Uint8Array }) {
   const selection = useUiStore(s => s.selection);
@@ -17,18 +21,19 @@ export function BitStreamTab({ bytes }: { bytes: Uint8Array }) {
   const hiRange = hover ?? selRange;
 
   const [hostRef, { width, height }] = useMeasure<HTMLDivElement>();
+  const bitsPerRow = bitsPerRowFor(width);
   const listRef = useRef<FixedSizeList>(null);
   useEffect(() => {
     if (!selRange) return;
-    listRef.current?.scrollToItem(Math.floor(selRange.start / BITS_PER_ROW), 'smart');
-  }, [selRange]);
+    listRef.current?.scrollToItem(Math.floor(selRange.start / bitsPerRow), 'smart');
+  }, [selRange, bitsPerRow]);
 
   const totalBits = bytes.length * 8;
-  const rowCount = Math.max(1, Math.ceil(totalBits / BITS_PER_ROW));
+  const rowCount = Math.max(1, Math.ceil(totalBits / bitsPerRow));
 
   const Row = useCallback(({ index, style }: { index: number; style: React.CSSProperties }) => {
-    const start = index * BITS_PER_ROW;
-    const end = Math.min(start + BITS_PER_ROW, totalBits);
+    const start = index * bitsPerRow;
+    const end = Math.min(start + bitsPerRow, totalBits);
     const parts: React.ReactNode[] = [];
     for (let i = start; i < end; i++) {
       const byte = bytes[i >> 3];
@@ -53,7 +58,7 @@ export function BitStreamTab({ bytes }: { bytes: Uint8Array }) {
         <span className="bts">{parts}</span>
       </div>
     );
-  }, [bytes, totalBits, selRange, hiRange, setSelection, parsed]);
+  }, [bytes, totalBits, selRange, hiRange, setSelection, parsed, bitsPerRow]);
 
   return (
     <div ref={hostRef} style={{ width: '100%', height: '100%' }}>
