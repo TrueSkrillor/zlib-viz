@@ -17,7 +17,9 @@ export const EXAMPLES: Example[] = [
     path: '/examples/dynamic-small.zlib' },
   { id: 'gzip', label: 'gzip wrapper',
     description: 'RFC 1952 wrapper with CRC32 + ISIZE.',
-    path: '/examples/gzip-plain.gz' },
+    // Served as .bin so the static server does not set Content-Encoding: gzip,
+    // which would make the browser transparently decompress the fixture.
+    path: '/examples/gzip-plain.bin' },
   { id: 'raw', label: 'Raw DEFLATE',
     description: 'Headerless RFC 1951 stream.',
     path: '/examples/raw-deflate.bin' },
