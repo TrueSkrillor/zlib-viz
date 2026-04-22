@@ -2,6 +2,7 @@ import { FixedSizeList } from 'react-window';
 import { useCallback, useMemo, useRef, useEffect } from 'react';
 import { useUiStore } from '../../state/selection';
 import { resolveSelection } from '../../state/resolve-selection';
+import { findSelectionAtOutputByte } from '../../state/find-at-output';
 import { useMeasure } from '../common/use-measure';
 
 const ROW_HEIGHT = 18;
@@ -14,6 +15,7 @@ function rowBytesFor(width: number): number {
 export function OutputHexTab() {
   const parsed = useUiStore(s => s.parsed);
   const selection = useUiStore(s => s.selection);
+  const setSelection = useUiStore(s => s.setSelection);
   const resolved = useMemo(() => resolveSelection(selection, parsed), [selection, parsed]);
   const [hostRef, { width, height }] = useMeasure<HTMLDivElement>();
   const rowBytes = rowBytesFor(width);
@@ -36,7 +38,15 @@ export function OutputHexTab() {
       const inSel = resolved.outputRange ? i >= resolved.outputRange.start && i < resolved.outputRange.end : false;
       const inBackref = resolved.backrefRange ? i >= resolved.backrefRange.start && i < resolved.backrefRange.end : false;
       const cls = inSel ? 'hi sel' : inBackref ? 'hi' : '';
-      parts.push(<span key={i} className={cls}>{decoded[i].toString(16).padStart(2, '0')}{i < end - 1 ? ' ' : ''}</span>);
+      parts.push(
+        <span
+          key={i}
+          className={cls}
+          onClick={() => parsed && setSelection(findSelectionAtOutputByte(parsed, i))}
+        >
+          {decoded[i].toString(16).padStart(2, '0')}{i < end - 1 ? ' ' : ''}
+        </span>,
+      );
       const c = decoded[i];
       asciiChars.push(c >= 0x20 && c < 0x7f ? String.fromCharCode(c) : '·');
     }
@@ -47,7 +57,7 @@ export function OutputHexTab() {
         <span className="ascii">{asciiChars.join('')}</span>
       </div>
     );
-  }, [decoded, resolved, rowBytes]);
+  }, [decoded, resolved, rowBytes, parsed, setSelection]);
 
   if (!parsed) return null;
   return (

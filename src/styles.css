@@ -110,7 +110,8 @@ html, body, #root { margin: 0; padding: 0; height: 100%; background: #0b0d12; co
 .output-text .span { position: relative; }
 .output-text .lit { color: #93c5fd; }
 .output-text .match { color: #f0abfc; background: rgba(244, 114, 182, 0.08); border-radius: 2px; }
-.output-text .hi { background: rgba(253, 224, 71, 0.25); }
+.output-text .hi { background: rgba(253, 224, 71, 0.55); color: #0b0d12; border-radius: 2px; box-shadow: 0 0 0 1px rgba(253, 224, 71, 0.8); }
+.output-text .backref { background: rgba(244, 114, 182, 0.35); color: #0b0d12; border-radius: 2px; box-shadow: 0 0 0 1px rgba(244, 114, 182, 0.6); }
 .output-hex-row { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 6px; align-items: center; white-space: pre; padding: 0 6px; font-size: 11.5px; }
 .output-hex-row .off { color: #475569; font-variant-numeric: tabular-nums; }
 .output-hex-row .hx { color: #c8d0de; overflow: hidden; }
