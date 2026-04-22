@@ -26,6 +26,22 @@ export function resolveSelection(s: Selection, p: ParsedStream | null): Resolved
     const field = lookupField(b, s.fieldPath);
     return { bitRange: asBitRange(field), outputRange: b.outputRange };
   }
+  if (s.kind === 'blockSection') {
+    const b = p.blocks[s.blockIndex];
+    if (!b || b.body.kind !== 'huffman') return { bitRange: null, outputRange: null };
+    const syms = b.body.symbols;
+    const firstSymStart = syms.length > 0
+      ? (syms[0].kind === 'match' ? syms[0].lengthCodeRange.start : syms[0].bitRange.start)
+      : b.range.end;
+    if (s.section === 'huffman-tables') {
+      // Dynamic: the on-stream tables run from the start of the dynamic meta
+      // through the last bit before the first symbol.
+      // Fixed: tables are implicit (RFC 1951 §3.2.6), nothing is encoded in the stream.
+      if (!b.body.dynamicMeta) return { bitRange: null, outputRange: null };
+      return { bitRange: { start: b.body.dynamicMeta.hlitRange.start, end: firstSymStart }, outputRange: b.outputRange };
+    }
+    return { bitRange: { start: firstSymStart, end: b.range.end }, outputRange: b.outputRange };
+  }
   if (s.kind === 'symbol') {
     const b = p.blocks[s.blockIndex];
     if (!b || b.body.kind !== 'huffman') return { bitRange: null, outputRange: null };

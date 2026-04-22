@@ -11,13 +11,19 @@ export function TreeTab() {
   const parsed = useUiStore(s => s.parsed);
   const depth = useUiStore(s => s.depth);
   const selection = useUiStore(s => s.selection);
+  const expansion = useUiStore(s => s.expansion);
   const setSelection = useUiStore(s => s.setSelection);
+  const toggleExpand = useUiStore(s => s.toggleExpand);
   const setHover = useUiStore(s => s.setHover);
-  const rows: TreeRow[] = useMemo(() => (parsed ? buildTreeRows(parsed, depth) : []), [parsed, depth]);
+  const rows: TreeRow[] = useMemo(
+    () => (parsed ? buildTreeRows(parsed, depth, expansion) : []),
+    [parsed, depth, expansion],
+  );
 
-  const selectedIdx = useMemo(() => {
-    return rows.findIndex(r => selectionEquals(r.selection, selection));
-  }, [rows, selection]);
+  const selectedIdx = useMemo(
+    () => rows.findIndex(r => selectionEquals(r.selection, selection)),
+    [rows, selection],
+  );
 
   const [hostRef, { width, height }] = useMeasure<HTMLDivElement>();
   const listRef = useRef<FixedSizeList>(null);
@@ -31,6 +37,12 @@ export function TreeTab() {
       const range = parsed ? resolveSelection(r.selection, parsed).bitRange : null;
       setHover(range);
     };
+    const caretGlyph = r.expandable ? (r.expanded ? '▾' : '▸') : '·';
+    const onCaretClick = (e: React.MouseEvent) => {
+      if (!r.expandable || !r.id) return;
+      e.stopPropagation();
+      toggleExpand(r.id);
+    };
     return (
       <div
         className={`tree-row ${index === selectedIdx ? 'active' : ''}`}
@@ -39,13 +51,18 @@ export function TreeTab() {
         onMouseEnter={onHover}
         onMouseLeave={() => setHover(null)}
       >
-        <span className="caret">{r.expandable ? '▸' : '·'}</span>
+        <span
+          className={`caret ${r.expandable ? 'clickable' : ''}`}
+          onClick={onCaretClick}
+        >
+          {caretGlyph}
+        </span>
         <span className="name">{r.label}</span>
         {r.detail && <span className="detail">{r.detail}</span>}
         {r.rangeText && <span className="range">{r.rangeText}</span>}
       </div>
     );
-  }, [rows, selectedIdx, parsed, setSelection, setHover]);
+  }, [rows, selectedIdx, parsed, setSelection, setHover, toggleExpand]);
 
   if (!parsed) return null;
   return (
@@ -66,5 +83,7 @@ function selectionEquals(a: TreeRow['selection'], b: TreeRow['selection']): bool
   if (a.kind === 'symbol' && b.kind === 'symbol') return a.blockIndex === b.blockIndex && a.symbolIndex === b.symbolIndex;
   if (a.kind === 'blockField' && b.kind === 'blockField')
     return a.blockIndex === b.blockIndex && JSON.stringify(a.fieldPath) === JSON.stringify(b.fieldPath);
+  if (a.kind === 'blockSection' && b.kind === 'blockSection')
+    return a.blockIndex === b.blockIndex && a.section === b.section;
   return false;
 }
